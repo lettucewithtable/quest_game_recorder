@@ -1,0 +1,27 @@
+{
+  "configs": [
+    {
+      "NumberOfPlayers": 7,
+      "Roles": [
+        0,
+        0,
+        0,
+        1,
+        2,
+        7
+      ]
+    },
+    {
+      "NumberOfPlayers": 7,
+      "Roles": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        7
+      ]
+    }
+  ]
+}

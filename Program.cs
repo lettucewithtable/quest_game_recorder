@@ -1,11 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 static class Program
 {
     static string pathGames = "games.json";
     static string pathNames = "namesandalias.json";
+    static string pathConfigs = "configs.json";
     static List<QuestGame> games = new List<QuestGame>();
+    static List<QuestGameConfig> configs = new List<QuestGameConfig>();
     static void Main()
     {
         if (!File.Exists(pathGames))
@@ -26,9 +29,18 @@ static class Program
 
             File.WriteAllText(pathNames, file.ToString());
         }
+        
+        if (!File.Exists(pathConfigs))
+        {
+            using (_ = File.CreateText(pathConfigs)) {}
+
+            JObject file = new JObject();
+            file.Add("configs", new JArray());
+            File.WriteAllText(pathConfigs, file.ToString());
+        }
 
         games = QuestGamesToCSharpObjects();
-
+        configs = QuestConfigsToCSharpObjects();
 
         MainMenu();
     }
@@ -42,21 +54,29 @@ static class Program
 @"(1) New Game
 (2) List Games
 (3) New Game Configuration
-(4) Game Analysis");
+(4) Game Analysis
+(5) Exit");
             Console.Write(">> ");
-            string? choice = Console.ReadLine();
+            ConsoleKeyInfo choice = Console.ReadKey();
+            Console.WriteLine();
             int choiceInt;
-            if (int.TryParse(choice, out choiceInt))
+            if (int.TryParse(choice.KeyChar.ToString(), out choiceInt))
             {
                 switch (choiceInt)
                 {
-                    case 1:
+                    case 1:     // New Game
+                        RecordNewGame();
                         break;
-                    case 2:
+                    case 2:     // List Games
                         break;
-                    case 3:
+                    case 3:     // New Game Configuration
+                        MakeNewGameConfig();
+                        UpdateJsonFiles();
                         break;
-                    case 4:
+                    case 4:     // Game Analysis
+                        break;
+                    case 5:     // Exit
+                        Environment.Exit(0);
                         break;
                     default:
                         Console.WriteLine("Invalid input.");
@@ -73,6 +93,61 @@ static class Program
             }
         }
         
+    }
+
+    public static void RecordNewGame()
+    {
+        
+    }
+
+
+    public static void MakeNewGameConfig()
+    {
+        QuestGameConfig newConfig = new QuestGameConfig();
+
+        Console.Write("# of players: ");
+        int choice;
+        if (int.TryParse(Console.ReadLine(), out choice))
+        {
+            newConfig.NumberOfPlayers = choice;
+        }
+        
+        string[] roleNames = Enum.GetNames(typeof(QuestGame.Role));
+        for(int i = 0; i < roleNames.Length; i++)
+        {
+            Console.WriteLine($"{i} - {roleNames[i]}");
+        }
+        Console.Write(">> ");
+        string? rawInput = Console.ReadLine();
+        List<string> tokens = TokenizeRawInput(rawInput, "[^0-9]");
+
+        foreach (string token in tokens)
+        {
+            newConfig.Roles.Add((QuestGame.Role) int.Parse(token));
+        }
+
+        configs.Add(newConfig);
+    }
+
+    public static List<string> TokenizeRawInput(string? rawInput, string regexReplace)
+    {
+        if (rawInput == null)
+        {
+            return new List<string>();
+        }
+
+        List<string> tokens = rawInput.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList(); // tokenize by space
+
+        for (var i = 0; i < tokens.Count; i++)
+        {
+            tokens[i] = Regex.Replace(tokens[i], regexReplace, "");
+        }
+        Console.Write("Tokens: ");
+        tokens.ForEach(p => Console.Write($"{PadTruc(p,2,false)}, "));
+        Console.WriteLine();
+
+        tokens.Sort();
+        return tokens;
     }
 
     
@@ -92,6 +167,13 @@ static class Program
         return root!;
     }
 
+    public static List<QuestGameConfig> QuestConfigsToCSharpObjects()
+    {
+        string jsonString = System.IO.File.ReadAllText(pathConfigs);
+        var root = JsonConvert.DeserializeObject<List<QuestGameConfig>>(JObject.Parse(jsonString)["configs"]!.ToString());
+        return root!;
+    }
+
     public static string QuestGamesToJson()
     {
         JObject key = new JObject
@@ -101,11 +183,21 @@ static class Program
         return key.ToString();
     }
 
-    public static void UpdateJsonFile()
+    public static string QuestConfigsToJson()
+    {
+        JObject key = new JObject
+        {
+            ["configs"] = JToken.FromObject(configs)
+        };
+        return key.ToString();
+    }
+
+    public static void UpdateJsonFiles()
     {
         try
         {
             File.WriteAllText(pathGames, QuestGamesToJson());
+            File.WriteAllText(pathConfigs, QuestConfigsToJson());
             Console.WriteLine("File successfully updated.");
         }
         catch (Exception e)

@@ -4,12 +4,14 @@ using System.Runtime.CompilerServices;
 
 public class QuestGame
 {
+    public DateTime Time { get; set; } = DateTime.Now;
     public List<QuestPlayer> Players { get; set; } = new List<QuestPlayer>();
     public List<RoundWin> RoundWins { get; set; } = new List<RoundWin>();
     public List<QuestPlayer> RoundLeaders { get; set; } = new List<QuestPlayer>();
     public bool HasFinalQuest { get; set; } = false;
     public bool? HunterSuccessful { get; set; } = null;
     public bool? GoodLastChanceSuccessful { get; set; } = null;
+    public QuestGameConfig Config { get; set; } = new QuestGameConfig();
 
     public class QuestPlayer
     {
@@ -47,6 +49,33 @@ public class QuestGame
         Evil,
     }
 
+}
+
+public class QuestGameConfig
+{
+    public int NumberOfPlayers { get; set; } = 0;
+    public List<QuestGame.Role> Roles { get; set; } = new List<QuestGame.Role>();
+
+    public override string ToString()
+    {
+        string returnVal =  $"{NumberOfPlayers} |";
+
+        foreach (QuestGame.Role role in Roles)
+        {
+            returnVal += " " + role;
+        }
+
+        return returnVal;
+    }
+
+    private static string PadTruc(string val, int length, bool alignRight = true)
+    {
+        if (alignRight)
+        {
+            return val.Length > length ? val.Substring(0,length) : val.PadLeft(length,' ');
+        }
+        return val.Length > length ? val.Substring(0,length) : val.PadRight(length,' ');
+    }
 }
 
     
