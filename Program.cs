@@ -97,7 +97,23 @@ static class Program
 
     public static void RecordNewGame()
     {
-        
+        Console.WriteLine("Select Config: ");
+        for (int i = 0; i < configs.Count; i++)
+        {
+            Console.WriteLine($"{i} - {configs[i]}");
+        }
+
+        int choice;
+        if (int.TryParse(Console.ReadLine(), out choice) && 0 <= choice && choice < configs.Count)
+        {
+            
+        }
+        else
+        {
+            Console.WriteLine("Invalid Number");
+            RecordNewGame();
+            return;
+        }
     }
 
 
@@ -107,9 +123,15 @@ static class Program
 
         Console.Write("# of players: ");
         int choice;
-        if (int.TryParse(Console.ReadLine(), out choice))
+        if (int.TryParse(Console.ReadLine(), out choice) && 0 < choice)
         {
             newConfig.NumberOfPlayers = choice;
+        }
+        else
+        {
+            Console.WriteLine("Invalid Number");
+            MakeNewGameConfig();
+            return;
         }
         
         string[] roleNames = Enum.GetNames(typeof(QuestGame.Role));

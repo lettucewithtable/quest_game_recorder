@@ -58,11 +58,13 @@ public class QuestGameConfig
 
     public override string ToString()
     {
-        string returnVal =  $"{NumberOfPlayers} |";
+        var groupBy = this.Roles.GroupBy(role => role).ToDictionary(group => group.Key, group => group.Count());
 
-        foreach (QuestGame.Role role in Roles)
+        string returnVal = $"{this.NumberOfPlayers} |";
+
+        foreach (var group in groupBy)
         {
-            returnVal += " " + role;
+            returnVal += $" x{group.Value} {group.Key}";
         }
 
         return returnVal;
