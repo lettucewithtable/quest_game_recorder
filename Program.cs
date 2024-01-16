@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -8,7 +9,7 @@ static class Program
     static string pathNames = "namesandalias.json";
     static string pathConfigs = "configs.json";
     static List<QuestGame> games = new List<QuestGame>();
-    static List<QuestGameConfig> configs = new List<QuestGameConfig>();
+    static List<QuestGame.QuestGameConfig> configs = new List<QuestGame.QuestGameConfig>();
     static void Main()
     {
         if (!File.Exists(pathGames))
@@ -68,20 +69,174 @@ static class Program
                         RecordNewGame();
                         break;
                     case 2:     // List Games
+                        ListAndEditGames();
                         break;
                     case 3:     // New Game Configuration
                         MakeNewGameConfig();
-                        UpdateJsonFiles();
                         break;
                     case 4:     // Game Analysis
                         break;
                     case 5:     // Exit
-                        Environment.Exit(0);
-                        break;
+                        return;
                     default:
                         Console.WriteLine("Invalid input.");
                         break;
                 }
+                UpdateJsonFiles();
+            }
+            else if (choice.Key == ConsoleKey.Escape)
+            {
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Invalid input.");
+            }
+
+            for (int i = 0; i < 10; i++)
+            {
+                Console.WriteLine();
+            }
+        }
+        
+    }
+
+    public static void RecordNewGame()
+    {   
+        QuestGame newQuestGame = new QuestGame();
+
+        Console.WriteLine("Select Config: ");
+        for (int i = 0; i < configs.Count; i++)
+        {
+            Console.WriteLine($"{i} - {configs[i]}");
+        }
+
+        int choice;
+        if (int.TryParse(Console.ReadLine(), out choice) && 0 <= choice && choice < configs.Count)
+        {
+            newQuestGame.Config = configs[choice];
+        }
+        else
+        {
+            Console.WriteLine("Invalid Number");
+            RecordNewGame();
+            return;
+        }
+
+        games.Add(newQuestGame);
+
+
+        int gameIndex = games.Count-1;
+        if (games.Count != 0)
+        {   
+            while (true)
+            {
+                Console.WriteLine("Play with previous players? (y/n)");
+                if (games[gameIndex].Config.NumberOfPlayers != games[gameIndex-1].Config.NumberOfPlayers)
+                {
+                    Console.WriteLine("WARNING: Player Count Mismatch");
+                }
+                Console.Write(">> ");
+                ConsoleKeyInfo keyChoice = Console.ReadKey();
+                Console.WriteLine();
+                if (keyChoice.KeyChar.ToString().ToLower() == "y")
+                {
+                    for (int i = 0; i < games[gameIndex].Players.Count; i++)
+                    {
+                        games[gameIndex].Players[i].PlayerID = games[gameIndex-1].Players[i].PlayerID;
+                    }
+                }
+                else if (keyChoice.KeyChar.ToString().ToLower() == "n")
+                {
+                    break;
+                }
+                else
+                {   
+                    Console.WriteLine("Invalid Input");
+                    continue;
+                }
+            }
+        }
+
+        EditGame(gameIndex);
+    }
+
+
+    public static void ListAndEditGames()
+    {
+        for (int i = 0; i < games.Count; i++)
+        {
+            Console.WriteLine($"Game {i}: ----------------------------------------------------------------");
+            Console.WriteLine(games[i]);
+            Console.WriteLine();
+        }
+
+        Console.Write(">> ");
+        string? stringInput = Console.ReadLine();
+        int choice;
+        if (int.TryParse(stringInput, out choice))
+        {   
+            if (choice < 0)
+            {
+                return;
+            }
+
+            if (choice >= games.Count)
+            {
+                choice = games.Count - 1;
+            }
+            EditGame(choice);
+        }
+    }
+
+
+    public static void EditGame(int gameIndex)
+    {   
+        while (true)
+        {   
+            Console.WriteLine(
+@"(1) Players
+(2) Leadership
+(3) Assign Players to Roles
+(4) Round Wins
+(5) Final Quest
+(6) Victory
+(7) Notes
+(8) Back");
+            Console.Write(">> ");
+            ConsoleKeyInfo choice = Console.ReadKey();
+            Console.WriteLine();
+            int choiceInt;
+            if (int.TryParse(choice.KeyChar.ToString(), out choiceInt))
+            {
+                switch (choiceInt)
+                {
+                    case 1:     
+                        EditPlayers(gameIndex);
+                        break;
+                    case 2:     
+                        
+                        break;
+                    case 3:     
+                        
+                        break;
+                    case 4:     
+                        break;
+                    case 5:
+                        break;
+                    case 6:
+                        break;
+                    case 7:     
+                        return;
+                    default:
+                        Console.WriteLine("Invalid input.");
+                        break;
+                }
+                UpdateJsonFiles();
+            }
+            else if (choice.Key == ConsoleKey.Escape)
+            {
+                return;
             }
             else
             {
@@ -92,34 +247,111 @@ static class Program
                 Console.WriteLine();
             }
         }
-        
     }
 
-    public static void RecordNewGame()
+    // Add and remove players
+    public static void EditPlayers(int gameIndex)
     {
-        Console.WriteLine("Select Config: ");
-        for (int i = 0; i < configs.Count; i++)
+        while (true)
         {
-            Console.WriteLine($"{i} - {configs[i]}");
+            Console.WriteLine(
+@"(1) Add Players
+(2) Remove Players
+(3) Back");
+            Console.Write(">> ");
+            ConsoleKeyInfo choice = Console.ReadKey();
+            Console.WriteLine();
+            int choiceInt;
+            if (int.TryParse(choice.KeyChar.ToString(), out choiceInt))
+            {
+                switch (choiceInt)
+                {
+                    case 1:
+                        AddPlayers(gameIndex);
+                        break;
+                    case 2:
+
+                        break;
+                    case 3:
+                        return;
+                    default:
+                        Console.WriteLine("Invalid input.");
+                        break;
+                }
+                UpdateJsonFiles();
+            }
+            else if (choice.Key == ConsoleKey.Escape)
+            {
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Invalid input.");
+            }
+            for (int i = 0; i < 10; i++)
+            {
+                Console.WriteLine();
+            }
+        }
+    }
+
+    public static void AddPlayers(int gameIndex)
+    {
+        QuestGame currentGame = games[gameIndex];
+
+        Console.Write("Input Players: ");
+        string? rawInput = Console.ReadLine();
+        Console.WriteLine();
+
+        List<string> tokens = TokenizeRawInput(rawInput, "[^a-zA-Z]");
+
+        List<string> namesToBeAdded = AliasesToNames(tokens);
+
+        Console.Write("NamesToBeAdded: ");
+        namesToBeAdded.ForEach(p => Console.Write($"{p}, "));
+        Console.WriteLine();
+
+        currentGame.Players.Add
+    }
+
+    public static List<string> AliasesToNames(List<string> tokens)
+    {
+        string jsonString = System.IO.File.ReadAllText(pathNames);
+        JObject namesAndAliasesJ = JObject.Parse(jsonString);
+        List<string> matchingNames = new List<string>();
+
+        foreach (string token in tokens)
+        {
+            bool tokenRecognized = false;
+            foreach (KeyValuePair<string, JToken?> child in namesAndAliasesJ)
+            {
+                if (child.Key.ToLower() == token.ToLower())
+                {
+                    matchingNames.Add(child.Key);
+                    tokenRecognized = true;
+                    break;
+                }
+                JArray aliases = (JArray)child.Value!;
+                if (aliases.Select(p => p.ToString().ToLower()).Contains(token.ToLower()))
+                {
+                    matchingNames.Add(child.Key);
+                    tokenRecognized = true;
+                    break;
+                }
+            }
+            if (!tokenRecognized)
+            {
+                Console.WriteLine($"Unrecognized Token: {token}");
+            }
         }
 
-        int choice;
-        if (int.TryParse(Console.ReadLine(), out choice) && 0 <= choice && choice < configs.Count)
-        {
-            
-        }
-        else
-        {
-            Console.WriteLine("Invalid Number");
-            RecordNewGame();
-            return;
-        }
+        return matchingNames;
     }
 
 
     public static void MakeNewGameConfig()
     {
-        QuestGameConfig newConfig = new QuestGameConfig();
+        QuestGame.QuestGameConfig newConfig = new QuestGame.QuestGameConfig();
 
         Console.Write("# of players: ");
         int choice;
@@ -134,7 +366,7 @@ static class Program
             return;
         }
         
-        string[] roleNames = Enum.GetNames(typeof(QuestGame.Role));
+        string[] roleNames = Enum.GetNames(typeof(QuestGame.QuestRole));
         for(int i = 0; i < roleNames.Length; i++)
         {
             Console.WriteLine($"{i} - {roleNames[i]}");
@@ -145,7 +377,7 @@ static class Program
 
         foreach (string token in tokens)
         {
-            newConfig.Roles.Add((QuestGame.Role) int.Parse(token));
+            newConfig.Roles.Add((QuestGame.QuestRole) int.Parse(token));
         }
 
         configs.Add(newConfig);
@@ -184,15 +416,15 @@ static class Program
     
     public static List<QuestGame> QuestGamesToCSharpObjects()
     {
-        string jsonString = System.IO.File.ReadAllText(pathGames);
+        string jsonString = File.ReadAllText(pathGames);
         var root = JsonConvert.DeserializeObject<List<QuestGame>>(JObject.Parse(jsonString)["games"]!.ToString());
         return root!;
     }
 
-    public static List<QuestGameConfig> QuestConfigsToCSharpObjects()
+    public static List<QuestGame.QuestGameConfig> QuestConfigsToCSharpObjects()
     {
-        string jsonString = System.IO.File.ReadAllText(pathConfigs);
-        var root = JsonConvert.DeserializeObject<List<QuestGameConfig>>(JObject.Parse(jsonString)["configs"]!.ToString());
+        string jsonString = File.ReadAllText(pathConfigs);
+        var root = JsonConvert.DeserializeObject<List<QuestGame.QuestGameConfig>>(JObject.Parse(jsonString)["configs"]!.ToString());
         return root!;
     }
 
