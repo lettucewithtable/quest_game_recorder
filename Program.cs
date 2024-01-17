@@ -10,6 +10,8 @@ static class Program
     static string pathConfigs = "configs.json";
     static List<QuestGame> games = new List<QuestGame>();
     static List<QuestGame.QuestGameConfig> configs = new List<QuestGame.QuestGameConfig>();
+    const string BLOCK = "████████████████████████████████████████████████████████████████";
+    const string DASH = "----------------------------------------------------------------";
     static void Main()
     {
         if (!File.Exists(pathGames))
@@ -51,15 +53,17 @@ static class Program
     {   
         List<(string,Action)> mainMenuValueActions = new List<(string, Action)>{
             ("New Game",RecordNewGame),
-            ("List Game",ListAndEditGames),
+            ("List Games",ListAndEditGames),
             ("New Game Configuration",MakeNewGameConfig),
             ("Game Analysis",new Action(() => throw new NotImplementedException()))
         };
-        ConsoleOptionsAndFunction(mainMenuValueActions);
+        ConsoleOptionsAndFunction(null,mainMenuValueActions);
     }
 
-    public static void ConsoleOptionsAndFunction(List<(string,Action)> optionFunctionPairs)
+    public static void ConsoleOptionsAndFunction(Action? runEachGo, List<(string,Action)> optionFunctionPairs)
     {   
+        runEachGo?.Invoke();
+
         Console.WriteLine("Select (#) or (ESC):");
         for (int i = 0; i < optionFunctionPairs.Count; i++)
         {   
@@ -69,11 +73,13 @@ static class Program
         ConsoleKeyInfo choice = Console.ReadKey();
         Console.WriteLine();
         int choiceInt;
-        if (int.TryParse(choice.KeyChar.ToString(), out choiceInt) && 0 < choiceInt && choiceInt < optionFunctionPairs.Count)
+        if (int.TryParse(choice.KeyChar.ToString(), out choiceInt) && 0 < choiceInt && choiceInt <= optionFunctionPairs.Count)
         {
+            Console.WriteLine(BLOCK);
             optionFunctionPairs[choiceInt-1].Item2.Invoke();
             Console.WriteLine();
-            ConsoleOptionsAndFunction(optionFunctionPairs);
+            Console.WriteLine(BLOCK);
+            ConsoleOptionsAndFunction(runEachGo,optionFunctionPairs);
         }
         else if (choice.Key == ConsoleKey.Escape)
         {
@@ -85,7 +91,7 @@ static class Program
         {
             Console.WriteLine("Invalid input.");
             Console.WriteLine();
-            ConsoleOptionsAndFunction(optionFunctionPairs);
+            ConsoleOptionsAndFunction(runEachGo,optionFunctionPairs);
         }
     }
 
@@ -133,6 +139,7 @@ static class Program
                     {
                         games[gameIndex].Players[i].PlayerID = games[gameIndex-1].Players[i].PlayerID;
                     }
+                    break;
                 }
                 else if (keyChoice.KeyChar.ToString().ToLower() == "n")
                 {
@@ -151,16 +158,17 @@ static class Program
 
 
     public static void ListAndEditGames()
-    {
+    {   
         for (int i = 0; i < games.Count; i++)
         {
-            Console.WriteLine($"Game {i}: ----------------------------------------------------------------");
+            Console.WriteLine(PadTruc($"Game {PadTruc(i.ToString(),3)}: {DASH}",64));
             Console.WriteLine(games[i]);
             Console.WriteLine();
         }
 
         Console.Write(">> ");
         string? stringInput = Console.ReadLine();
+        Console.WriteLine(BLOCK);
         int choice;
         if (int.TryParse(stringInput, out choice))
         {   
@@ -189,23 +197,34 @@ static class Program
             ("Victory",() => throw new NotImplementedException()),
             ("Notes",() => throw new NotImplementedException()),
         };
-        ConsoleOptionsAndFunction(editGameValueActions);
+        ConsoleOptionsAndFunction(() => {
+                Console.WriteLine(games[gameIndex]);
+                Console.WriteLine(DASH);
+            }
+            , editGameValueActions);
+        UpdateJsonFiles();
     }
 
     // Add and remove players
     public static void EditPlayers(int gameIndex)
     {
         List<(string,Action)> editPlayersValueAction = new List<(string, Action)>{
-            ("Add Player",() => AddPlayers(gameIndex)),
-            ("Remove Players",() => throw new NotImplementedException()),
+            ("Add Players",() => AddPlayers(gameIndex)),
+            ("Remove Players",() => RemovePlayers(gameIndex)),
+            ("Clear Players", () => ClearPlayers(gameIndex))
         };
 
-        ConsoleOptionsAndFunction(editPlayersValueAction);
+        ConsoleOptionsAndFunction(null, editPlayersValueAction);
     }
 
     public static void AddPlayers(int gameIndex)
     {
         QuestGame currentGame = games[gameIndex];
+
+        Console.WriteLine("Current Players:");
+        Console.Write("[");
+        currentGame.Players.ForEach(p => Console.Write(p.PlayerID + ", "));
+        Console.WriteLine("]");
 
         Console.Write("Input Players: ");
         string? rawInput = Console.ReadLine();
@@ -219,7 +238,53 @@ static class Program
         namesToBeAdded.ForEach(p => Console.Write($"{p}, "));
         Console.WriteLine();
 
-        //currentGame.Players.Add
+        // Make sure the name isn't already added, (this is the UNION set
+        // operation, but can't be done with List.Union because I didn't bother
+        // implementing equality for QuestPlayer)
+        foreach (string name in namesToBeAdded)
+        {
+            if (currentGame.Players.Select(p => p.PlayerID).Contains(name))
+            {
+                return;
+            }
+
+            currentGame.Players.Add(new QuestGame.QuestPlayer{ PlayerID = name });
+        }
+    }
+
+    public static void RemovePlayers(int gameIndex)
+    {
+        QuestGame currentGame = games[gameIndex];
+
+        Console.WriteLine("Current Players:");
+        Console.Write("[");
+        currentGame.Players.ForEach(p => Console.Write(p.PlayerID + ", "));
+        Console.WriteLine("]");
+
+        Console.Write("Input Players (to be removed): ");
+        string? rawInput = Console.ReadLine();
+        Console.WriteLine();
+
+        List<string> tokens = TokenizeRawInput(rawInput, "[^a-zA-Z]");
+
+        List<string> namesToBeRemoved = AliasesToNames(tokens);
+
+        Console.Write("NamesToBeRemoved: ");
+        namesToBeRemoved.ForEach(p => Console.Write($"{p}, "));
+        Console.WriteLine();
+
+        // Make sure the name isn't already added, (this is the UNION set
+        // operation, but can't be done with List.Union because I didn't bother
+        // implementing equality for QuestPlayer)
+        foreach (string name in namesToBeRemoved)
+        {
+            QuestGame.QuestPlayer? playerToRemove = currentGame.Players.SingleOrDefault(p => p.PlayerID == name);
+
+            if (playerToRemove != null)
+            {
+                currentGame.Players.Remove(playerToRemove);
+            }
+        }
     }
 
     public static List<string> AliasesToNames(List<string> tokens)
@@ -254,6 +319,11 @@ static class Program
         }
 
         return matchingNames;
+    }
+
+    public static void ClearPlayers(int gameIndex)
+    {
+        games[gameIndex].Players = new List<QuestGame.QuestPlayer>();
     }
 
 
