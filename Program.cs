@@ -1,7 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static QuestGame;
 
 static class Program
 {
@@ -16,26 +19,26 @@ static class Program
     {
         if (!File.Exists(pathGames))
         {
-            using (_ = File.CreateText(pathGames)) {} // The using block will automatically close the text file after creation
-            
-            
+            using (_ = File.CreateText(pathGames)) { } // The using block will automatically close the text file after creation
+
+
             JObject file = new JObject();
             file.Add("games", new JArray());
             File.WriteAllText(pathGames, file.ToString());
         }
 
         if (!File.Exists(pathNames))
-        {   
-            using (_ = File.CreateText(pathNames)) {}
+        {
+            using (_ = File.CreateText(pathNames)) { }
 
             JObject file = new JObject();
 
             File.WriteAllText(pathNames, file.ToString());
         }
-        
+
         if (!File.Exists(pathConfigs))
         {
-            using (_ = File.CreateText(pathConfigs)) {}
+            using (_ = File.CreateText(pathConfigs)) { }
 
             JObject file = new JObject();
             file.Add("configs", new JArray());
@@ -50,24 +53,24 @@ static class Program
 
 
     public static void MainMenu()
-    {   
-        List<(string,Action)> mainMenuValueActions = new List<(string, Action)>{
+    {
+        List<(string, Action)> mainMenuValueActions = new List<(string, Action)>{
             ("New Game",RecordNewGame),
             ("List Games",ListAndEditGames),
             ("New Game Configuration",MakeNewGameConfig),
             ("Game Analysis",new Action(() => throw new NotImplementedException()))
         };
-        ConsoleOptionsAndFunction(null,mainMenuValueActions);
+        ConsoleOptionsAndFunction(null, mainMenuValueActions);
     }
 
-    public static void ConsoleOptionsAndFunction(Action? runEachGo, List<(string,Action)> optionFunctionPairs)
-    {   
+    public static void ConsoleOptionsAndFunction(Action? runEachGo, List<(string, Action)> optionFunctionPairs)
+    {
         runEachGo?.Invoke();
 
         Console.WriteLine("Select (#) or (ESC):");
         for (int i = 0; i < optionFunctionPairs.Count; i++)
-        {   
-            Console.WriteLine($"({i+1}) {optionFunctionPairs[i].Item1}");
+        {
+            Console.WriteLine($"({i + 1}) {optionFunctionPairs[i].Item1}");
         }
         Console.Write(">> ");
         ConsoleKeyInfo choice = Console.ReadKey();
@@ -76,10 +79,11 @@ static class Program
         if (int.TryParse(choice.KeyChar.ToString(), out choiceInt) && 0 < choiceInt && choiceInt <= optionFunctionPairs.Count)
         {
             Console.WriteLine(BLOCK);
-            optionFunctionPairs[choiceInt-1].Item2.Invoke();
+            for (int i = 0; i < 10; i++) { Console.WriteLine(); }
+            optionFunctionPairs[choiceInt - 1].Item2.Invoke();
             Console.WriteLine();
             Console.WriteLine(BLOCK);
-            ConsoleOptionsAndFunction(runEachGo,optionFunctionPairs);
+            ConsoleOptionsAndFunction(runEachGo, optionFunctionPairs);
         }
         else if (choice.Key == ConsoleKey.Escape)
         {
@@ -91,12 +95,12 @@ static class Program
         {
             Console.WriteLine("Invalid input.");
             Console.WriteLine();
-            ConsoleOptionsAndFunction(runEachGo,optionFunctionPairs);
+            ConsoleOptionsAndFunction(runEachGo, optionFunctionPairs);
         }
     }
 
     public static void RecordNewGame()
-    {   
+    {
         QuestGame newQuestGame = new QuestGame();
 
         Console.WriteLine("Select Config: ");
@@ -120,48 +124,37 @@ static class Program
         games.Add(newQuestGame);
 
 
-        int gameIndex = games.Count-1;
+        int gameIndex = games.Count - 1;
         if (games.Count != 1)
-        {   
-            while (true)
+        {
+            Console.WriteLine("Play with previous players? (y/n)");
+            if (games[gameIndex].Config.NumberOfPlayers != games[gameIndex - 1].Config.NumberOfPlayers)
             {
-                Console.WriteLine("Play with previous players? (y/n)");
-                if (games[gameIndex].Config.NumberOfPlayers != games[gameIndex-1].Config.NumberOfPlayers)
+                Console.WriteLine("WARNING: Player Count Mismatch");
+            }
+
+            if (InputYesNo())
+            {
+                for (int i = 0; i < games[gameIndex - 1].Players.Count; i++)
                 {
-                    Console.WriteLine("WARNING: Player Count Mismatch");
-                }
-                Console.Write(">> ");
-                ConsoleKeyInfo keyChoice = Console.ReadKey();
-                Console.WriteLine();
-                if (keyChoice.KeyChar.ToString().ToLower() == "y")
-                {
-                    for (int i = 0; i < games[gameIndex].Players.Count; i++)
+                    games[gameIndex].Players.Add(new QuestGame.QuestPlayer()
                     {
-                        games[gameIndex].Players[i].PlayerID = games[gameIndex-1].Players[i].PlayerID;
-                    }
-                    break;
-                }
-                else if (keyChoice.KeyChar.ToString().ToLower() == "n")
-                {
-                    break;
-                }
-                else
-                {   
-                    Console.WriteLine("Invalid Input");
-                    continue;
+                        PlayerID = games[gameIndex - 1].Players[i].PlayerID
+                    });
                 }
             }
         }
+
 
         EditGame(gameIndex);
     }
 
 
     public static void ListAndEditGames()
-    {   
+    {
         for (int i = 0; i < games.Count; i++)
         {
-            Console.WriteLine(PadTruc($"Game {PadTruc(i.ToString(),3)}: {DASH}",64));
+            Console.WriteLine(PadTruc($"Game {PadTruc(i.ToString(), 3, true)}: {DASH}", 64));
             Console.WriteLine(games[i]);
             Console.WriteLine();
         }
@@ -169,9 +162,10 @@ static class Program
         Console.Write(">> ");
         string? stringInput = Console.ReadLine();
         Console.WriteLine(BLOCK);
+        for (int i = 0; i < 10; i++) { Console.WriteLine(); }
         int choice;
         if (int.TryParse(stringInput, out choice))
-        {   
+        {
             if (choice < 0)
             {
                 return;
@@ -187,17 +181,18 @@ static class Program
 
 
     public static void EditGame(int gameIndex)
-    {   
-        List<(string,Action)> editGameValueActions = new List<(string, Action)>{
+    {
+        List<(string, Action)> editGameValueActions = new List<(string, Action)>{
             ("Players",() => EditPlayers(gameIndex)),
-            ("Leadership",() => throw new NotImplementedException()),
+            ("Leadership",() => InputLeadership(gameIndex)),
+            ("Round Wins",() => InputRounds(gameIndex)),
+            ("Final Quest",() => InputFinalQuest(gameIndex)),
             ("Assign Players to Roles",() => throw new NotImplementedException()),
-            ("Round Wins",() => throw new NotImplementedException()),
-            ("Final Quest",() => throw new NotImplementedException()),
-            ("Victory",() => throw new NotImplementedException()),
-            ("Notes",() => throw new NotImplementedException()),
+            ("Victory",() => EditVictory(gameIndex)),
+            ("Notes",() => EditNotes(gameIndex)),
         };
-        ConsoleOptionsAndFunction(() => {
+        ConsoleOptionsAndFunction(() =>
+            {
                 Console.WriteLine(games[gameIndex]);
                 Console.WriteLine(DASH);
             }
@@ -208,7 +203,7 @@ static class Program
     // Add and remove players
     public static void EditPlayers(int gameIndex)
     {
-        List<(string,Action)> editPlayersValueAction = new List<(string, Action)>{
+        List<(string, Action)> editPlayersValueAction = new List<(string, Action)>{
             ("Add Players",() => AddPlayers(gameIndex)),
             ("Remove Players",() => RemovePlayers(gameIndex)),
             ("Clear Players", () => ClearPlayers(gameIndex))
@@ -248,7 +243,7 @@ static class Program
                 return;
             }
 
-            currentGame.Players.Add(new QuestGame.QuestPlayer{ PlayerID = name });
+            currentGame.Players.Add(new QuestGame.QuestPlayer { PlayerID = name });
         }
     }
 
@@ -326,6 +321,208 @@ static class Program
         games[gameIndex].Players = new List<QuestGame.QuestPlayer>();
     }
 
+    public static void InputLeadership(int gameIndex)
+    {
+        Console.WriteLine("Input Leaders (in order)");
+        Console.Write(">> ");
+        string? rawInput = Console.ReadLine();
+        List<string> playerIDs = AliasesToNames(TokenizeRawInput(rawInput, "[^a-zA-Z]"));
+        games[gameIndex].RoundLeaders = playerIDs;
+    }
+
+    public static void InputRounds(int gameIndex)
+    {
+        var currentGame = games[gameIndex];
+
+        Console.WriteLine("Input Game Rounds: ");
+        string? rawString = Console.ReadLine();
+
+        List<string> tokens = TokenizeRawInput(rawString, "[^GEge]");
+
+        var selectedTokens = tokens.Where(p => p.Length == 1);
+
+        currentGame.RoundWins = new List<QuestGame.RoundWin>();
+        foreach (var token in selectedTokens)
+        {
+            if (token.ToLower() == "g")
+            {
+                currentGame.RoundWins.Add(QuestGame.RoundWin.Good);
+            }
+            else if (token.ToLower() == "e")
+            {
+                currentGame.RoundWins.Add(QuestGame.RoundWin.Evil);
+            }
+            else
+            {
+                throw new UnreachableException("Round Win was not of the character 'G' or 'E'");
+            }
+        }
+    }
+
+    public static void InputFinalQuest(int gameIndex)
+    {
+        Console.WriteLine("Did the Final Quest Begin (5 mins of talking)? (y/n)");
+        games[gameIndex].HasFinalQuest = InputYesNo();
+
+        if (!games[gameIndex].HasFinalQuest)
+        {
+            games[gameIndex].HunterSuccessful = null;
+            games[gameIndex].GoodLastChanceSuccessful = null;
+            return;
+        }
+
+        Console.WriteLine("Was the Hunter Successful? (y/n)");
+        games[gameIndex].HunterSuccessful = InputYesNo();
+
+        if ((bool)games[gameIndex].HunterSuccessful!)
+        {
+            games[gameIndex].GoodLastChanceSuccessful = null;
+            return;
+        }
+
+        Console.WriteLine("Did Good's Last Chance Succeed? (y/n)");
+        games[gameIndex].GoodLastChanceSuccessful = InputYesNo();
+    }
+
+    public static void AssignPlayersToRoles(int gameIndex)
+    {
+
+    }
+
+    public static void EditVictory(int gameIndex)
+    {
+        List<(string, Action)> editPlayersValueAction = new List<(string, Action)>{
+            ("Auto Assign Victory",() => AutoAssignVictory(gameIndex)),
+            ("Manually Assign Victory",() => ManuallyAssignVictory(gameIndex))
+        };
+        ConsoleOptionsAndFunction(null, editPlayersValueAction);
+    }
+
+    public static void AutoAssignVictory(int gameIndex)
+    {
+        bool GoodWins = true;
+        QuestGame currentGame = games[gameIndex];
+        if (currentGame.HasFinalQuest)
+        {
+            if (currentGame.HunterSuccessful ?? false)
+            {
+                GoodWins = false;
+            }
+            else if (!currentGame.GoodLastChanceSuccessful ?? false)
+            {
+                GoodWins = false;
+            }
+        }
+
+        if (GoodWins)
+        {
+            currentGame.Players.ForEach(p => p.Victory = p.Role.IsGood() ? Victory.Full : Victory.None);
+        }
+        else
+        {
+            currentGame.Players.ForEach(p => p.Victory = p.Role.IsEvil() ? Victory.Full : Victory.None);
+        }
+    }
+
+    static readonly List<QuestRole> Good = new List<QuestRole>{
+            QuestRole.LoyalServantOfArthur,
+            QuestRole.Duke,
+            QuestRole.Archduke,
+            QuestRole.Cleric,
+            QuestRole.Troublemaker,
+            QuestRole.Youth,
+            QuestRole.Apprentice,
+            QuestRole.Arthur
+        };
+    public static bool IsGood(this QuestRole? role)
+    {
+        if (role == null) { return false; }
+        return Good.Contains((QuestRole)role);
+    }
+
+    static readonly List<QuestRole> Evil = new List<QuestRole>{
+            QuestRole.MinionOfMordred,
+            QuestRole.MorganLeFey,
+            QuestRole.Scion,
+            QuestRole.Changeling,
+            QuestRole.Brute,
+            QuestRole.Lunatic,
+            QuestRole.Trickster,
+            QuestRole.Revealer
+        };
+
+    public static bool IsEvil(this QuestRole? role)
+    {
+        if (role == null) { return false; }
+        return Evil.Contains((QuestRole)role);
+    }
+
+    public static void ManuallyAssignVictory(int gameIndex)
+    {
+        foreach (QuestPlayer player in games[gameIndex].Players)
+        {
+            Console.WriteLine($"{player.Role} : {player.PlayerID} : {player.Victory}");
+            Console.WriteLine("Change player's victory status? (y/n)");
+            if (InputYesNo())
+            {
+                Console.WriteLine("Player's new victory status, (F)ull, (P)artial, (N)one.");
+                char playerInput = InputChar(new char[]{'f','p','n'});
+                if (playerInput == 'f')
+                {
+                    player.Victory = Victory.Full;
+                }
+                else if (playerInput == 'p')
+                {
+                    player.Victory = Victory.Partial;
+                }
+                else if (playerInput == 'n')
+                {
+                    player.Victory = Victory.None;
+                }
+                else
+                {
+                    throw new UnreachableException("Invalid Return Character for PlayerInput");
+                }
+            }
+        }
+    }
+
+    public static void EditNotes(int gameIndex)
+    {
+        List<(string, Action)> editPlayersValueAction = new List<(string, Action)>{
+            ("Add Line to Notes",() => AddLineToNotes(gameIndex)),
+            ("Clear Notes", () => ClearNotes(gameIndex))
+        };
+
+        ConsoleOptionsAndFunction(() =>
+        {
+            Console.Write(PadTruc("Notes " + DASH, 64));
+            Console.WriteLine(games[gameIndex].Notes);
+            Console.WriteLine(DASH);
+        }, editPlayersValueAction);
+    }
+
+    public static void AddLineToNotes(int gameIndex)
+    {
+        Console.Write(">> ");
+        string? stringInput = Console.ReadLine();
+
+        if (stringInput != null)
+        {
+            games[gameIndex].Notes += $"\n{stringInput}";
+        }
+    }
+
+    public static void ClearNotes(int gameIndex)
+    {
+        Console.WriteLine("Confirm Deletion of Notes (y/n)");
+        if (InputYesNo())
+        {
+            games[gameIndex].Notes = "";
+        }
+    }
+
+
 
     public static void MakeNewGameConfig()
     {
@@ -343,9 +540,9 @@ static class Program
             MakeNewGameConfig();
             return;
         }
-        
+
         string[] roleNames = Enum.GetNames(typeof(QuestGame.QuestRole));
-        for(int i = 0; i < roleNames.Length; i++)
+        for (int i = 0; i < roleNames.Length; i++)
         {
             Console.WriteLine($"{i} - {roleNames[i]}");
         }
@@ -355,7 +552,7 @@ static class Program
 
         foreach (string token in tokens)
         {
-            newConfig.Roles.Add((QuestGame.QuestRole) int.Parse(token));
+            newConfig.Roles.Add((QuestGame.QuestRole)int.Parse(token));
         }
 
         configs.Add(newConfig);
@@ -375,23 +572,59 @@ static class Program
             tokens[i] = Regex.Replace(tokens[i], regexReplace, "");
         }
         Console.Write("Tokens: ");
-        tokens.ForEach(p => Console.Write($"{PadTruc(p,2,false)}, "));
+        tokens.ForEach(p => Console.Write($"{p}, "));
         Console.WriteLine();
 
-        tokens.Sort();
         return tokens;
     }
 
-    
-    private static string PadTruc(string val, int length, bool alignRight = true)
+    public static bool InputYesNo()
     {
-        if (alignRight)
+        Console.Write(">> ");
+        ConsoleKeyInfo keyChoice = Console.ReadKey();
+        Console.WriteLine();
+        if (keyChoice.KeyChar.ToString().ToLower() == "y")
         {
-            return val.Length > length ? val.Substring(0,length) : val.PadLeft(length,' ');
+            return true;
         }
-        return val.Length > length ? val.Substring(0,length) : val.PadRight(length,' ');
+        else if (keyChoice.KeyChar.ToString().ToLower() == "n" || keyChoice.Key == ConsoleKey.Escape)
+        {
+            return false;
+        }
+        else
+        {
+            Console.WriteLine("Invalid Input");
+            return InputYesNo();
+        }
     }
-    
+
+    public static char InputChar(char[] inputChars)
+    {
+        Console.Write(">> ");
+        ConsoleKeyInfo keyChoice = Console.ReadKey();
+        Console.WriteLine();
+        if (inputChars.Contains(char.ToLower(keyChoice.KeyChar)))
+        {
+            return char.ToLower(keyChoice.KeyChar);
+        }
+        else
+        {
+            Console.WriteLine("Invalid Input");
+            return InputChar(inputChars);
+        }
+    }
+
+
+
+    private static string PadTruc(string val, int length, bool alignLeft = false)
+    {
+        if (alignLeft)
+        {
+            return val.Length > length ? val.Substring(0, length) : val.PadRight(length, ' ');
+        }
+        return val.Length > length ? val.Substring(0, length) : val.PadLeft(length, ' ');
+    }
+
     public static List<QuestGame> QuestGamesToCSharpObjects()
     {
         string jsonString = File.ReadAllText(pathGames);

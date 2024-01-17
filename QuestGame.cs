@@ -40,6 +40,8 @@ public class QuestGame
             questLeaders += $"{leader} ";
         }
 
+        string notesString = Notes.Replace("\n","\n    ");
+
         return
 @$"DateTime: {Time}
 Players: {playersString}
@@ -48,25 +50,23 @@ QuestLeaders: {questLeaders}
 HasFinalQuest: {HasFinalQuest}
 HunterSuccessful: {HunterSuccessful}
 GoodLastChanceSuccessful: {GoodLastChanceSuccessful}
-Notes: 
-{Notes}";
+Notes: {notesString}";
     }
 
     public class QuestPlayer
     {
         public string PlayerID { get; set; } = "";
         public QuestRole? Role { get; set; } = null;
-        public bool? DidWin { get; set; } = null;
+        public Victory? Victory { get; set; } = null;
 
         public QuestPlayer() {}
         public override string ToString()
         {
-            string didWinText = DidWin != null ? (DidWin.Value ? "Won" : "Lost") : string.Empty;
+            string didWinText = Victory != null ? Victory.Value.ToString() : string.Empty;
 
             return $"{Role}: {PlayerID} | " + didWinText;
         }
     }
-
 
     public enum QuestRole
     {
@@ -96,6 +96,13 @@ Notes:
         Evil,
     }
 
+    public enum Victory
+    {
+        Full,
+        Partial,
+        None
+    }
+
 
     public class QuestGameConfig
     {
@@ -115,15 +122,15 @@ Notes:
 
             return returnVal;
         }
+    }
 
-        private static string PadTruc(string val, int length, bool alignRight = true)
+    private static string PadTruc(string val, int length, bool alignLeft = false)
+    {
+        if (alignLeft)
         {
-            if (alignRight)
-            {
-                return val.Length > length ? val.Substring(0, length) : val.PadLeft(length, ' ');
-            }
             return val.Length > length ? val.Substring(0, length) : val.PadRight(length, ' ');
         }
+        return val.Length > length ? val.Substring(0, length) : val.PadLeft(length, ' ');
     }
 }
 
