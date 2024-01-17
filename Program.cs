@@ -48,57 +48,45 @@ static class Program
 
 
     public static void MainMenu()
-    {
-        while (true)
-        {   
-            Console.WriteLine(
-@"(1) New Game
-(2) List Games
-(3) New Game Configuration
-(4) Game Analysis
-(5) Exit");
-            Console.Write(">> ");
-            ConsoleKeyInfo choice = Console.ReadKey();
-            Console.WriteLine();
-            int choiceInt;
-            if (int.TryParse(choice.KeyChar.ToString(), out choiceInt))
-            {
-                switch (choiceInt)
-                {
-                    case 1:     // New Game
-                        RecordNewGame();
-                        break;
-                    case 2:     // List Games
-                        ListAndEditGames();
-                        break;
-                    case 3:     // New Game Configuration
-                        MakeNewGameConfig();
-                        break;
-                    case 4:     // Game Analysis
-                        break;
-                    case 5:     // Exit
-                        return;
-                    default:
-                        Console.WriteLine("Invalid input.");
-                        break;
-                }
-                UpdateJsonFiles();
-            }
-            else if (choice.Key == ConsoleKey.Escape)
-            {
-                return;
-            }
-            else
-            {
-                Console.WriteLine("Invalid input.");
-            }
+    {   
+        List<(string,Action)> mainMenuValueActions = new List<(string, Action)>{
+            ("New Game",RecordNewGame),
+            ("List Game",ListAndEditGames),
+            ("New Game Configuration",MakeNewGameConfig),
+            ("Game Analysis",new Action(() => throw new NotImplementedException()))
+        };
+        ConsoleOptionsAndFunction(mainMenuValueActions);
+    }
 
-            for (int i = 0; i < 10; i++)
-            {
-                Console.WriteLine();
-            }
+    public static void ConsoleOptionsAndFunction(List<(string,Action)> optionFunctionPairs)
+    {   
+        Console.WriteLine("Select (#) or (ESC):");
+        for (int i = 0; i < optionFunctionPairs.Count; i++)
+        {   
+            Console.WriteLine($"({i+1}) {optionFunctionPairs[i].Item1}");
         }
-        
+        Console.Write(">> ");
+        ConsoleKeyInfo choice = Console.ReadKey();
+        Console.WriteLine();
+        int choiceInt;
+        if (int.TryParse(choice.KeyChar.ToString(), out choiceInt) && 0 < choiceInt && choiceInt < optionFunctionPairs.Count)
+        {
+            optionFunctionPairs[choiceInt-1].Item2.Invoke();
+            Console.WriteLine();
+            ConsoleOptionsAndFunction(optionFunctionPairs);
+        }
+        else if (choice.Key == ConsoleKey.Escape)
+        {
+            //This character is simply to remove the adverse effect of pressing escape in the c# console
+            Console.WriteLine("0");
+            return;
+        }
+        else
+        {
+            Console.WriteLine("Invalid input.");
+            Console.WriteLine();
+            ConsoleOptionsAndFunction(optionFunctionPairs);
+        }
     }
 
     public static void RecordNewGame()
@@ -127,7 +115,7 @@ static class Program
 
 
         int gameIndex = games.Count-1;
-        if (games.Count != 0)
+        if (games.Count != 1)
         {   
             while (true)
             {
@@ -192,107 +180,27 @@ static class Program
 
     public static void EditGame(int gameIndex)
     {   
-        while (true)
-        {   
-            Console.WriteLine(
-@"(1) Players
-(2) Leadership
-(3) Assign Players to Roles
-(4) Round Wins
-(5) Final Quest
-(6) Victory
-(7) Notes
-(8) Back");
-            Console.Write(">> ");
-            ConsoleKeyInfo choice = Console.ReadKey();
-            Console.WriteLine();
-            int choiceInt;
-            if (int.TryParse(choice.KeyChar.ToString(), out choiceInt))
-            {
-                switch (choiceInt)
-                {
-                    case 1:     
-                        EditPlayers(gameIndex);
-                        break;
-                    case 2:     
-                        
-                        break;
-                    case 3:     
-                        
-                        break;
-                    case 4:     
-                        break;
-                    case 5:
-                        break;
-                    case 6:
-                        break;
-                    case 7:     
-                        return;
-                    default:
-                        Console.WriteLine("Invalid input.");
-                        break;
-                }
-                UpdateJsonFiles();
-            }
-            else if (choice.Key == ConsoleKey.Escape)
-            {
-                return;
-            }
-            else
-            {
-                Console.WriteLine("Invalid input.");
-            }
-            for (int i = 0; i < 10; i++)
-            {
-                Console.WriteLine();
-            }
-        }
+        List<(string,Action)> editGameValueActions = new List<(string, Action)>{
+            ("Players",() => EditPlayers(gameIndex)),
+            ("Leadership",() => throw new NotImplementedException()),
+            ("Assign Players to Roles",() => throw new NotImplementedException()),
+            ("Round Wins",() => throw new NotImplementedException()),
+            ("Final Quest",() => throw new NotImplementedException()),
+            ("Victory",() => throw new NotImplementedException()),
+            ("Notes",() => throw new NotImplementedException()),
+        };
+        ConsoleOptionsAndFunction(editGameValueActions);
     }
 
     // Add and remove players
     public static void EditPlayers(int gameIndex)
     {
-        while (true)
-        {
-            Console.WriteLine(
-@"(1) Add Players
-(2) Remove Players
-(3) Back");
-            Console.Write(">> ");
-            ConsoleKeyInfo choice = Console.ReadKey();
-            Console.WriteLine();
-            int choiceInt;
-            if (int.TryParse(choice.KeyChar.ToString(), out choiceInt))
-            {
-                switch (choiceInt)
-                {
-                    case 1:
-                        AddPlayers(gameIndex);
-                        break;
-                    case 2:
+        List<(string,Action)> editPlayersValueAction = new List<(string, Action)>{
+            ("Add Player",() => AddPlayers(gameIndex)),
+            ("Remove Players",() => throw new NotImplementedException()),
+        };
 
-                        break;
-                    case 3:
-                        return;
-                    default:
-                        Console.WriteLine("Invalid input.");
-                        break;
-                }
-                UpdateJsonFiles();
-            }
-            else if (choice.Key == ConsoleKey.Escape)
-            {
-                return;
-            }
-            else
-            {
-                Console.WriteLine("Invalid input.");
-            }
-            for (int i = 0; i < 10; i++)
-            {
-                Console.WriteLine();
-            }
-        }
+        ConsoleOptionsAndFunction(editPlayersValueAction);
     }
 
     public static void AddPlayers(int gameIndex)
@@ -311,7 +219,7 @@ static class Program
         namesToBeAdded.ForEach(p => Console.Write($"{p}, "));
         Console.WriteLine();
 
-        currentGame.Players.Add
+        //currentGame.Players.Add
     }
 
     public static List<string> AliasesToNames(List<string> tokens)
