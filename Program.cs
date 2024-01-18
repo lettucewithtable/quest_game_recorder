@@ -1,5 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Net.Quic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
@@ -130,7 +132,7 @@ static class Program
             Console.WriteLine("Play with previous players? (y/n)");
             if (games[gameIndex].Config.NumberOfPlayers != games[gameIndex - 1].Config.NumberOfPlayers)
             {
-                Console.WriteLine("WARNING: Player Count Mismatch");
+                WriteWarning("WARNING: Player Count Mismatch");
             }
 
             if (InputYesNo())
@@ -155,7 +157,7 @@ static class Program
         for (int i = 0; i < games.Count; i++)
         {
             Console.WriteLine(PadTruc($"Game {PadTruc(i.ToString(), 3, true)}: {DASH}", 64));
-            Console.WriteLine(games[i]);
+            WriteQuestGame(games[i]);
             Console.WriteLine();
         }
 
@@ -193,7 +195,8 @@ static class Program
         };
         ConsoleOptionsAndFunction(() =>
             {
-                Console.WriteLine(games[gameIndex]);
+                UpdateJsonFiles();
+                WriteQuestGame(games[gameIndex]);
                 Console.WriteLine(DASH);
             }
             , editGameValueActions);
@@ -326,8 +329,20 @@ static class Program
         Console.WriteLine("Input Leaders (in order)");
         Console.Write(">> ");
         string? rawInput = Console.ReadLine();
-        List<string> playerIDs = AliasesToNames(TokenizeRawInput(rawInput, "[^a-zA-Z]"));
-        games[gameIndex].RoundLeaders = playerIDs;
+        List<string> playerNames = AliasesToNames(TokenizeRawInput(rawInput, "[^a-zA-Z]"));
+        games[gameIndex].RoundLeaders = playerNames;
+        if (playerNames.Distinct().Count() < playerNames.Count())
+        {
+            WriteWarning("WARNING: Duplicate Player");
+        }
+        List<string> playerIDs = games[gameIndex].Players.Select(p => p.PlayerID).ToList();
+        foreach (string pstr in playerNames)
+        {
+            if (!playerIDs.Contains(pstr))
+            {
+                WriteWarning($"WARNING: {pstr} is not in game");
+            }
+        }
     }
 
     public static void InputRounds(int gameIndex)
@@ -362,21 +377,20 @@ static class Program
     public static void InputFinalQuest(int gameIndex)
     {
         Console.WriteLine("Did the Final Quest Begin (5 mins of talking)? (y/n)");
+        games[gameIndex].HunterSuccessful = null;
+        games[gameIndex].GoodLastChanceSuccessful = null;
         games[gameIndex].HasFinalQuest = InputYesNo();
 
         if (!games[gameIndex].HasFinalQuest)
         {
-            games[gameIndex].HunterSuccessful = null;
-            games[gameIndex].GoodLastChanceSuccessful = null;
             return;
         }
 
-        Console.WriteLine("Was the Hunter Successful? (y/n)");
-        games[gameIndex].HunterSuccessful = InputYesNo();
-
-        if ((bool)games[gameIndex].HunterSuccessful!)
+        Console.WriteLine("Did the Hunter choose to hunt? (y/n)");
+        if (InputYesNo())
         {
-            games[gameIndex].GoodLastChanceSuccessful = null;
+            Console.WriteLine("Did the Hunter Succeed? (y/n)");
+            games[gameIndex].HunterSuccessful = InputYesNo();
             return;
         }
 
@@ -412,25 +426,27 @@ static class Program
                     Console.WriteLine("ERROR: That player is not in this game");
                 }
                 else
-                {
-                    Console.WriteLine($"{names[0]} (y/n)");
+                {   
+                    // decided it was overly annoying to ask for confirmation, and we can just enter it again if you get it wrong.
+                    // Console.WriteLine($"{names[0]} (y/n)");
                     var player = games[gameIndex].Players.Where(p => p.PlayerID == names[0]).ToList();
-                    if (player.Count > 1)
-                    {
-                        Console.WriteLine("WARNING: Duplicate Player ID");
-                    }
+                    // if (player.Count > 1)
+                    // {
+                    //     WriteWarning("WARNING: Duplicate Player ID");
+                    // }
 
-                    if (player[0].Role != null)
-                    {
-                        Console.WriteLine("WARNING: Player already has Role");
-                    }
-                    if (InputYesNo())
-                    {
+                    // if (player[0].Role != null)
+                    // {
+                    //     WriteWarning("WARNING: Player already has Role");
+                    // }
+                    // if (InputYesNo())
+                    // {
 
+                    // }
 
-                        player[0].Role = role;
-                        break;
-                    }
+                    player[0].Role = role;
+                    Console.WriteLine(player[0].PlayerID);
+                    break;
                 }
                 Console.WriteLine(DASH);
             }
@@ -460,6 +476,11 @@ static class Program
             else if (!currentGame.GoodLastChanceSuccessful ?? false)
             {
                 GoodWins = false;
+                // This line looks complicated, its just asking, for all the roundleaders, how many were evil? if all of them, then good wins IF good's last chance happens (even if unsuccessful)
+                if (games[gameIndex].Players.Where(p => p.Role.IsEvil()).Select(p => p.PlayerID).Intersect(games[gameIndex].RoundLeaders).Count() == games[gameIndex].RoundLeaders.Count)
+                {
+                    GoodWins = true;
+                }
             }
         }
 
@@ -494,10 +515,11 @@ static class Program
             QuestRole.MorganLeFey,
             QuestRole.Scion,
             QuestRole.Changeling,
+            QuestRole.BlindHunter,
             QuestRole.Brute,
             QuestRole.Lunatic,
             QuestRole.Trickster,
-            QuestRole.Revealer
+            QuestRole.Revealer,
         };
 
     public static bool IsEvil(this QuestRole? role)
@@ -665,13 +687,14 @@ static class Program
 
 
 
-    private static string PadTruc(string val, int length, bool alignLeft = false)
-    {
+    private static string PadTruc(object? val, int length, bool alignLeft = false)
+    {   
+        string valStr = val?.ToString() ?? "";
         if (alignLeft)
         {
-            return val.Length > length ? val.Substring(0, length) : val.PadRight(length, ' ');
+            return valStr.Length > length ? valStr.Substring(0, length) : valStr.PadRight(length, ' ');
         }
-        return val.Length > length ? val.Substring(0, length) : val.PadLeft(length, ' ');
+        return valStr.Length > length ? valStr.Substring(0, length) : valStr.PadLeft(length, ' ');
     }
 
     public static List<QuestGame> QuestGamesToCSharpObjects()
@@ -718,5 +741,69 @@ static class Program
         {
             Console.WriteLine($"Error updating file: {e.Message}");
         }
+    }
+    
+    public static void WriteWarning(string message)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine(message);
+        Console.ResetColor();
+    }
+
+    public static void WriteQuestGame(QuestGame questGame)
+    {
+        Console.WriteLine(KeyValuePadTruc64("Time: ",questGame.Time));
+        Console.WriteLine(KeyValuePadTruc64("Roles: ",""));
+        foreach (QuestPlayer player in questGame.Players)
+        {
+            Console.Write(PadTruc("",20));
+            if (player.Role.IsGood())
+            {
+                Console.ForegroundColor = ConsoleColor.Blue;
+            }
+            else if (player.Role.IsEvil())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+            }
+            Console.Write(PadTruc(player.Role,15) + ": " + PadTruc(player.PlayerID,12,true));
+
+            Console.ResetColor();
+            if (questGame.RoundLeaders.Contains(player.PlayerID))
+            {
+                Console.Write($" {PadTruc(questGame.RoundLeaders.IndexOf(player.PlayerID)+1,2,true)}");
+            }
+            else
+            {
+                Console.Write(PadTruc("",3));
+            }
+
+            switch (player.Victory)
+            {
+                case Victory.Full:
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine(PadTruc("| + ",11,true));
+                    break;
+                case Victory.Partial:
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine(PadTruc("| ~ ",11,true));
+                    break;
+                case Victory.None:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(PadTruc("| x ",11,true));
+                    break;
+                case null:
+                    Console.ResetColor();
+                    Console.WriteLine(PadTruc("| ? ",11,true));
+                    break;
+            }
+            Console.ResetColor();
+        }
+
+
+    }
+
+    public static string KeyValuePadTruc64(object key, object value)
+    {
+        return PadTruc($"{key}: ", 20) + PadTruc(value,44,true);
     }
 }
