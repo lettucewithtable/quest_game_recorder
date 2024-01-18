@@ -52,6 +52,7 @@
       "RoundWins": [
         1,
         0,
+        0,
         1,
         1
       ],
@@ -62,7 +63,7 @@
       ],
       "HasFinalQuest": true,
       "HunterSuccessful": null,
-      "GoodLastChanceSuccessful": false,
+      "GoodLastChanceSuccessful": true,
       "Config": {
         "NumberOfPlayers": 9,
         "Roles": [
@@ -78,6 +79,201 @@
         ]
       },
       "Notes": "\nsanta is not real\nand I like bananas"
+    },
+    {
+      "Time": "2024-01-17T21:22:44.8981212-08:00",
+      "Players": [
+        {
+          "PlayerID": "Simon",
+          "Role": 0,
+          "Victory": null
+        },
+        {
+          "PlayerID": "Xiameera",
+          "Role": 6,
+          "Victory": null
+        },
+        {
+          "PlayerID": "Orion",
+          "Role": 1,
+          "Victory": null
+        },
+        {
+          "PlayerID": "Sebastian",
+          "Role": 2,
+          "Victory": null
+        },
+        {
+          "PlayerID": "Ali",
+          "Role": 5,
+          "Victory": null
+        },
+        {
+          "PlayerID": "Seven",
+          "Role": 8,
+          "Victory": null
+        }
+      ],
+      "RoundWins": [],
+      "RoundLeaders": [
+        "Simon",
+        "Orion",
+        "Ben"
+      ],
+      "HasFinalQuest": false,
+      "HunterSuccessful": null,
+      "GoodLastChanceSuccessful": null,
+      "Config": {
+        "NumberOfPlayers": 9,
+        "Roles": [
+          0,
+          1,
+          2,
+          5,
+          6,
+          8,
+          9,
+          10,
+          7
+        ]
+      },
+      "Notes": ""
+    },
+    {
+      "Time": "2024-01-17T21:27:03.111805-08:00",
+      "Players": [],
+      "RoundWins": [],
+      "RoundLeaders": [],
+      "HasFinalQuest": false,
+      "HunterSuccessful": null,
+      "GoodLastChanceSuccessful": null,
+      "Config": {
+        "NumberOfPlayers": 9,
+        "Roles": [
+          0,
+          1,
+          2,
+          5,
+          6,
+          8,
+          9,
+          10,
+          7
+        ]
+      },
+      "Notes": ""
+    },
+    {
+      "Time": "2024-01-17T22:00:59.4915644-08:00",
+      "Players": [
+        {
+          "PlayerID": "Simon",
+          "Role": 0,
+          "Victory": 2
+        },
+        {
+          "PlayerID": "Xiameera",
+          "Role": 1,
+          "Victory": 0
+        },
+        {
+          "PlayerID": "Seven",
+          "Role": 14,
+          "Victory": null
+        },
+        {
+          "PlayerID": "Ali",
+          "Role": 2,
+          "Victory": 0
+        },
+        {
+          "PlayerID": "Isaac",
+          "Role": 8,
+          "Victory": 2
+        }
+      ],
+      "RoundWins": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "RoundLeaders": [
+        "Simon",
+        "Ali",
+        "Isaac",
+        "Xiameera"
+      ],
+      "HasFinalQuest": true,
+      "HunterSuccessful": null,
+      "GoodLastChanceSuccessful": false,
+      "Config": {
+        "NumberOfPlayers": 5,
+        "Roles": [
+          0,
+          1,
+          2,
+          8,
+          14
+        ]
+      },
+      "Notes": ""
+    },
+    {
+      "Time": "2024-01-17T22:03:42.8373638-08:00",
+      "Players": [
+        {
+          "PlayerID": "Simon",
+          "Role": 8,
+          "Victory": 2
+        },
+        {
+          "PlayerID": "Xiameera",
+          "Role": 14,
+          "Victory": 2
+        },
+        {
+          "PlayerID": "Seven",
+          "Role": 0,
+          "Victory": 2
+        },
+        {
+          "PlayerID": "Ali",
+          "Role": 1,
+          "Victory": 0
+        },
+        {
+          "PlayerID": "Isaac",
+          "Role": 2,
+          "Victory": 0
+        }
+      ],
+      "RoundWins": [
+        1,
+        0,
+        1,
+        1
+      ],
+      "RoundLeaders": [
+        "Ali",
+        "Isaac",
+        "Simon",
+        "Seven"
+      ],
+      "HasFinalQuest": true,
+      "HunterSuccessful": true,
+      "GoodLastChanceSuccessful": null,
+      "Config": {
+        "NumberOfPlayers": 5,
+        "Roles": [
+          0,
+          1,
+          2,
+          8,
+          14
+        ]
+      },
+      "Notes": "\nhello\nhow are you doing today\nquite fine thank you\nthat is fantastic"
     }
   ]
 }
