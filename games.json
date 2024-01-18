@@ -1,3 +1,83 @@
 {
-  "games": []
+  "games": [
+    {
+      "Time": "2024-01-17T16:41:04.4049924-08:00",
+      "Players": [
+        {
+          "PlayerID": "Simon",
+          "Role": 9,
+          "Victory": 0
+        },
+        {
+          "PlayerID": "Xiameera",
+          "Role": 0,
+          "Victory": 0
+        },
+        {
+          "PlayerID": "Ali",
+          "Role": 1,
+          "Victory": 2
+        },
+        {
+          "PlayerID": "Seven",
+          "Role": 10,
+          "Victory": 0
+        },
+        {
+          "PlayerID": "Orion",
+          "Role": 2,
+          "Victory": 2
+        },
+        {
+          "PlayerID": "Sebastian",
+          "Role": 6,
+          "Victory": 0
+        },
+        {
+          "PlayerID": "Jacob",
+          "Role": 5,
+          "Victory": 0
+        },
+        {
+          "PlayerID": "Atley",
+          "Role": 7,
+          "Victory": 2
+        },
+        {
+          "PlayerID": "Ben",
+          "Role": 8,
+          "Victory": 0
+        }
+      ],
+      "RoundWins": [
+        1,
+        0,
+        1,
+        1
+      ],
+      "RoundLeaders": [
+        "Ali",
+        "Orion",
+        "Atley"
+      ],
+      "HasFinalQuest": true,
+      "HunterSuccessful": null,
+      "GoodLastChanceSuccessful": false,
+      "Config": {
+        "NumberOfPlayers": 9,
+        "Roles": [
+          0,
+          1,
+          2,
+          5,
+          6,
+          8,
+          9,
+          10,
+          7
+        ]
+      },
+      "Notes": "\nsanta is not real\nand I like bananas"
+    }
+  ]
 }
