@@ -187,7 +187,7 @@ static class Program
             ("Leadership",() => InputLeadership(gameIndex)),
             ("Round Wins",() => InputRounds(gameIndex)),
             ("Final Quest",() => InputFinalQuest(gameIndex)),
-            ("Assign Players to Roles",() => throw new NotImplementedException()),
+            ("Assign Players to Roles",() => AssignPlayersToRoles(gameIndex)),
             ("Victory",() => EditVictory(gameIndex)),
             ("Notes",() => EditNotes(gameIndex)),
         };
@@ -318,7 +318,7 @@ static class Program
 
     public static void ClearPlayers(int gameIndex)
     {
-        games[gameIndex].Players = new List<QuestGame.QuestPlayer>();
+        games[gameIndex].Players = new List<QuestPlayer>();
     }
 
     public static void InputLeadership(int gameIndex)
@@ -386,7 +386,56 @@ static class Program
 
     public static void AssignPlayersToRoles(int gameIndex)
     {
+        games[gameIndex].Players.ForEach(p => p.Role = null);
+        foreach (QuestRole role in games[gameIndex].Config.Roles)
+        {   
+            Console.Write("[");
+            games[gameIndex].Players.Where(p => p.Role == null).ToList().ForEach(p => Console.Write($"{p.PlayerID}, "));
+            Console.WriteLine("]");
+            Console.WriteLine($"Who was {role}?");
+            while (true)
+            {
+                Console.Write(">> ");
+                string? rawInput = Console.ReadLine();
+                if (rawInput == null || rawInput == "")
+                {   
+                    Console.WriteLine("Skipped Role");
+                    break;
+                }
+                List<string> names = AliasesToNames(TokenizeRawInput(rawInput, "[^a-zA-Z]"));
+                if (names.Count == 0)
+                {
 
+                }
+                else if (!games[gameIndex].Players.Select(p => p.PlayerID).Contains(names[0]))
+                {
+                    Console.WriteLine("ERROR: That player is not in this game");
+                }
+                else
+                {
+                    Console.WriteLine($"{names[0]} (y/n)");
+                    var player = games[gameIndex].Players.Where(p => p.PlayerID == names[0]).ToList();
+                    if (player.Count > 1)
+                    {
+                        Console.WriteLine("WARNING: Duplicate Player ID");
+                    }
+
+                    if (player[0].Role != null)
+                    {
+                        Console.WriteLine("WARNING: Player already has Role");
+                    }
+                    if (InputYesNo())
+                    {
+
+
+                        player[0].Role = role;
+                        break;
+                    }
+                }
+                Console.WriteLine(DASH);
+            }
+            Console.WriteLine(BLOCK);
+        }
     }
 
     public static void EditVictory(int gameIndex)
