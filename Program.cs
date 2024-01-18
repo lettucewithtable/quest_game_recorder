@@ -196,6 +196,7 @@ static class Program
         ConsoleOptionsAndFunction(() =>
             {
                 UpdateJsonFiles();
+                Console.WriteLine(BLOCK);
                 WriteQuestGame(games[gameIndex]);
                 Console.WriteLine(DASH);
             }
@@ -486,11 +487,15 @@ static class Program
 
         if (GoodWins)
         {
-            currentGame.Players.ForEach(p => p.Victory = p.Role.IsGood() ? Victory.Full : Victory.None);
+            currentGame.Players.Where(p => p.Role.IsGood()).ToList().ForEach(p => p.Victory = Victory.Full);
+            currentGame.Players.Where(p => p.Role.IsEvil()).ToList().ForEach(p => p.Victory = Victory.None);
+            currentGame.Players.Where(p => !p.Role.IsEvil() && !p.Role.IsGood()).ToList().ForEach(p => p.Victory = null);
         }
         else
         {
-            currentGame.Players.ForEach(p => p.Victory = p.Role.IsEvil() ? Victory.Full : Victory.None);
+            currentGame.Players.Where(p => p.Role.IsGood()).ToList().ForEach(p => p.Victory = Victory.None);
+            currentGame.Players.Where(p => p.Role.IsEvil()).ToList().ForEach(p => p.Victory = Victory.Full);
+            currentGame.Players.Where(p => !p.Role.IsEvil() && !p.Role.IsGood()).ToList().ForEach(p => p.Victory = null);
         }
     }
 
@@ -752,8 +757,8 @@ static class Program
 
     public static void WriteQuestGame(QuestGame questGame)
     {
-        Console.WriteLine(KeyValuePadTruc64("Time: ",questGame.Time));
-        Console.WriteLine(KeyValuePadTruc64("Roles: ",""));
+        Console.WriteLine(KeyValuePadTruc64("Time",questGame.Time));
+        Console.WriteLine(KeyValuePadTruc64("Roles",""));
         foreach (QuestPlayer player in questGame.Players)
         {
             Console.Write(PadTruc("",20));
@@ -784,7 +789,7 @@ static class Program
                     Console.WriteLine(PadTruc("| + ",11,true));
                     break;
                 case Victory.Partial:
-                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
                     Console.WriteLine(PadTruc("| ~ ",11,true));
                     break;
                 case Victory.None:
@@ -798,8 +803,83 @@ static class Program
             }
             Console.ResetColor();
         }
+        Console.Write(PadTruc("Quests: [ ", 22));
+        foreach (int r in questGame.RoundWins)
+        {
+            if (r == 1)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Write("@ ");
+            }
+            else if (r == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.Write("@ ");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                Console.Write("@ ");
+            }
+        }
+        Console.ResetColor();
+        Console.Write("]");
+        if (questGame.HasFinalQuest)
+        {
+            Console.Write(" ---> ");
+            if (questGame.HunterSuccessful != null)
+            {
+                if ((bool)questGame.HunterSuccessful)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write("@ ");
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                    Console.Write("@ ");
+                }
+            }
+            else
+            {
+                Console.Write("o ---> ");
+                if (questGame.GoodLastChanceSuccessful == null)
+                {
+                    //this is an invalid state for the game to be in, it can't be that the it has a final quest, but huntersuccessful and goodlastchance be null
+                    Console.Write("???");
+                }
+                else
+                {
+                    if ((bool)questGame.GoodLastChanceSuccessful)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.Write("@");
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("@");
+                    }
+                }
+            }
 
 
+        }
+        Console.ResetColor();
+        Console.WriteLine();
+        Console.WriteLine();
+        Console.WriteLine(KeyValuePadTruc64("Unassigned Roles","["));
+        List<QuestPlayer> nonNullRoles = questGame.Players.Where(p => p.Role != null).ToList();
+        List<QuestRole> unassignedRoles = questGame.Config.Roles.Except(nonNullRoles.Select(p => p.Role ?? (QuestRole)(-1))).ToList();
+        foreach (QuestRole role in unassignedRoles)
+        {
+            Console.WriteLine(PadTruc("",20) + PadTruc(role,44,true));
+        }
+        Console.WriteLine(PadTruc("",20) + "]");
+        Console.Write(KeyValuePadTruc64("Notes",""));
+        string notesString = questGame.Notes.Replace("\n","\n" + PadTruc("",20));
+        Console.Write(notesString);
+        Console.WriteLine();
     }
 
     public static string KeyValuePadTruc64(object key, object value)
