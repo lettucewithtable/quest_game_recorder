@@ -61,6 +61,7 @@
         "Orion",
         "Atley"
       ],
+      "AmuletObservations": [],
       "HasFinalQuest": true,
       "HunterSuccessful": null,
       "GoodLastChanceSuccessful": true,
@@ -120,6 +121,7 @@
         "Orion",
         "Ben"
       ],
+      "AmuletObservations": [],
       "HasFinalQuest": false,
       "HunterSuccessful": null,
       "GoodLastChanceSuccessful": null,
@@ -144,6 +146,7 @@
       "Players": [],
       "RoundWins": [],
       "RoundLeaders": [],
+      "AmuletObservations": [],
       "HasFinalQuest": false,
       "HunterSuccessful": null,
       "GoodLastChanceSuccessful": null,
@@ -204,6 +207,7 @@
         "Isaac",
         "Xiameera"
       ],
+      "AmuletObservations": [],
       "HasFinalQuest": true,
       "HunterSuccessful": null,
       "GoodLastChanceSuccessful": false,
@@ -260,6 +264,7 @@
         "Simon",
         "Seven"
       ],
+      "AmuletObservations": [],
       "HasFinalQuest": true,
       "HunterSuccessful": true,
       "GoodLastChanceSuccessful": null,
@@ -280,27 +285,27 @@
       "Players": [
         {
           "PlayerID": "Simon",
-          "Role": null,
-          "Victory": null
-        },
-        {
-          "PlayerID": "Xiameera",
           "Role": 0,
           "Victory": null
         },
         {
+          "PlayerID": "Xiameera",
+          "Role": 1,
+          "Victory": null
+        },
+        {
           "PlayerID": "Seven",
-          "Role": null,
+          "Role": 2,
           "Victory": null
         },
         {
           "PlayerID": "Isaac",
-          "Role": null,
+          "Role": 5,
           "Victory": null
         },
         {
           "PlayerID": "Ali",
-          "Role": null,
+          "Role": 6,
           "Victory": null
         }
       ],
@@ -311,7 +316,23 @@
         1,
         1
       ],
-      "RoundLeaders": [],
+      "RoundLeaders": [
+        "Simon",
+        "Xiameera",
+        "Seven",
+        "Isaac",
+        "Ali"
+      ],
+      "AmuletObservations": [
+        {
+          "Item1": "Seven",
+          "Item2": "Simon"
+        },
+        {
+          "Item1": "Ali",
+          "Item2": "Xiameera"
+        }
+      ],
       "HasFinalQuest": true,
       "HunterSuccessful": false,
       "GoodLastChanceSuccessful": null,
