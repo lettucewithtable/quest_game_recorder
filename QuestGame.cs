@@ -8,6 +8,7 @@ public class QuestGame
     public List<QuestPlayer> Players { get; set; } = new List<QuestPlayer>();
     public List<RoundWin> RoundWins { get; set; } = new List<RoundWin>();
     public List<string> RoundLeaders { get; set; } = new List<string>();
+    public List<(string,string)> AmuletObservations = //TODO
     public bool HasFinalQuest { get; set; } = false;
     // only have a bool value if HasFinalQuest and hunt is initiated
     public bool? HunterSuccessful { get; set; } = null;
