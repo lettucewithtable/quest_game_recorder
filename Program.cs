@@ -158,6 +158,7 @@ static class Program
         {
             Console.WriteLine(PadTruc($"Game {PadTruc(i.ToString(), 3, true)}: {DASH}", 64));
             WriteQuestGame(games[i]);
+            CheckForGameInconsistencies(i);
             Console.WriteLine();
         }
 
@@ -185,8 +186,10 @@ static class Program
     public static void EditGame(int gameIndex)
     {
         List<(string, Action)> editGameValueActions = new List<(string, Action)>{
+            ("Game Type", () => SpecifyGameType(gameIndex)),
             ("Players",() => EditPlayers(gameIndex)),
             ("Leadership",() => InputLeadership(gameIndex)),
+            ("AmuletObservations", () => InputAmuletObservations(gameIndex)),
             ("Round Wins",() => InputRounds(gameIndex)),
             ("Final Quest",() => InputFinalQuest(gameIndex)),
             ("Assign Players to Roles",() => AssignPlayersToRoles(gameIndex)),
@@ -199,6 +202,7 @@ static class Program
                 Console.WriteLine(BLOCK);
                 WriteQuestGame(games[gameIndex]);
                 Console.WriteLine(DASH);
+                CheckForGameInconsistencies(gameIndex);
             }
             , editGameValueActions);
         UpdateJsonFiles();
@@ -332,19 +336,73 @@ static class Program
         string? rawInput = Console.ReadLine();
         List<string> playerNames = AliasesToNames(TokenizeRawInput(rawInput, "[^a-zA-Z]"));
         games[gameIndex].RoundLeaders = playerNames;
-        if (playerNames.Distinct().Count() < playerNames.Count())
-        {
-            WriteWarning("WARNING: Duplicate Player");
-        }
-        List<string> playerIDs = games[gameIndex].Players.Select(p => p.PlayerID).ToList();
-        foreach (string pstr in playerNames)
-        {
-            if (!playerIDs.Contains(pstr))
-            {
-                WriteWarning($"WARNING: {pstr} is not in game");
-            }
-        }
+        // if (playerNames.Distinct().Count() < playerNames.Count())
+        // {
+        //     WriteWarning("WARNING: Duplicate Player");
+        // }
+        // List<string> playerIDs = games[gameIndex].Players.Select(p => p.PlayerID).ToList();
+        // foreach (string pstr in playerNames)
+        // {
+        //     if (!playerIDs.Contains(pstr))
+        //     {
+        //         WriteWarning($"WARNING: {pstr} is not in game");
+        //     }
+        // }
     }
+
+    public static void InputAmuletObservations(int gameIndex)
+    {
+        List<(string, Action)> inputAmuletMenu = new List<(string, Action)>{
+            ("Amulet Observers",() => InputAmuletObservers(gameIndex)),
+            ("Amulet Observed",() => InputAmuletObserved(gameIndex))
+        };
+
+        ConsoleOptionsAndFunction(null, inputAmuletMenu);
+    }
+
+    public static void InputAmuletObservers(int gameIndex)
+    {
+        Console.WriteLine("Input Amulet Observers (in order)");
+        Console.Write(">> ");
+        string? rawInput = Console.ReadLine();
+        List<string> playerNames = AliasesToNames(TokenizeRawInput(rawInput, "[^a-zA-Z]"));
+        while (playerNames.Count > games[gameIndex].AmuletObservations.Count)
+        {
+            games[gameIndex].AmuletObservations.Add(("",""));
+        }
+        for (int i = 0; i < playerNames.Count; i++)
+        {
+            games[gameIndex].AmuletObservations[i] = (playerNames[i],games[gameIndex].AmuletObservations[i].Item2);
+        }
+
+        // if (playerNames.Distinct().Count() < playerNames.Count())
+        // {
+        //     WriteWarning("WARNING: Duplicate Player");
+        // }
+    }
+
+
+    public static void InputAmuletObserved(int gameIndex)
+    {
+        Console.WriteLine("Input Amulet Observed (in order)");
+        Console.Write(">> ");
+        string? rawInput = Console.ReadLine();
+        List<string> playerNames = AliasesToNames(TokenizeRawInput(rawInput, "[^a-zA-Z]"));
+        while (playerNames.Count > games[gameIndex].AmuletObservations.Count)
+        {
+            games[gameIndex].AmuletObservations.Add(("",""));
+        }
+        for (int i = 0; i < playerNames.Count; i++)
+        {
+            games[gameIndex].AmuletObservations[i] = (games[gameIndex].AmuletObservations[i].Item1,playerNames[i]);
+        }
+
+        // if (playerNames.Distinct().Count() < playerNames.Count())
+        // {
+        //     WriteWarning("WARNING: Duplicate Player");
+        // }
+    }
+
 
     public static void InputRounds(int gameIndex)
     {
@@ -747,6 +805,42 @@ static class Program
             Console.WriteLine($"Error updating file: {e.Message}");
         }
     }
+
+    public static void CheckForGameInconsistencies(int gameIndex)
+    {
+        //check for if leader and amulet observers overlap
+        WriteWarning("WARNING: TEST WARNING");
+        //ensure that everyone has proper victory value 
+
+        //ensure that final quest does not occur if good wins with 3 wins
+
+        //ensure that if final quest happens that either hunterSuccessful or goodsLastChance (but not both) are not null
+
+        //someone does not have a role
+
+        //game is incomplete
+
+        //duplicate leadership or amulet-ship
+
+        //leadership or amulet-ship person does not appear in the game
+
+        //someone has a role not in the config
+
+        //more leaders than their are rounds
+
+        //more or less amulet's then their should be (need knowledge about boards)
+        //notes should highlight why a warning is acceptable (say extra amulet or amulet in different location/quest) otherwise assume basic set up
+        //if game type is directors cut or default, this check should check, otherwise, don't
+
+        //amulet observer/observed count mismatch
+
+        //no hunter to hunt (yet the hunterSuccessful is still not null)
+
+        //invalid quest/finalquest games state (if 3 good quests but still final quest, or finalquest but not 3 bad wins, or no final quest with 3 bad wins)
+
+        //if game looks correct, green "valid game" should appear
+        //notes should specify something special if modified game is selected
+    }
     
     public static void WriteWarning(string message)
     {
@@ -770,7 +864,22 @@ static class Program
             {
                 Console.ForegroundColor = ConsoleColor.Red;
             }
-            Console.Write(PadTruc(player.Role,15) + ": " + PadTruc(player.PlayerID,12,true));
+            Console.Write(PadTruc(player.Role,15) + ": " + PadTruc(player.PlayerID,8,true));
+
+            if (questGame.AmuletObservations.Select(p => p.Item1).Contains(player.PlayerID))
+            {
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.Write($" ({PadTruc(questGame.AmuletObservations.Select(p => p.Item1).ToList().IndexOf(player.PlayerID),1)})");
+            }
+            else if (questGame.AmuletObservations.Select(p => p.Item2).Contains(player.PlayerID))
+            {
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Console.Write($" ({PadTruc(questGame.AmuletObservations.Select(p => p.Item2).ToList().IndexOf(player.PlayerID),1)})");
+            }
+            else
+            {
+                Console.Write(PadTruc("",4));
+            }
 
             Console.ResetColor();
             if (questGame.RoundLeaders.Contains(player.PlayerID))

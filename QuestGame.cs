@@ -4,17 +4,23 @@ using System.Runtime.CompilerServices;
 
 public class QuestGame
 {
+    //start time
     public DateTime Time { get; set; } = DateTime.Now;
+    // ideally order reflects seating position (clockwise)
     public List<QuestPlayer> Players { get; set; } = new List<QuestPlayer>();
+    //ordered
     public List<RoundWin> RoundWins { get; set; } = new List<RoundWin>();
+    //ordered
     public List<string> RoundLeaders { get; set; } = new List<string>();
-    public List<(string,string)> AmuletObservations = //TODO
+    //item 1 observer, item 2 observed
+    public List<(string,string)> AmuletObservations { get; set; } = new List<(string, string)>();
     public bool HasFinalQuest { get; set; } = false;
     // only have a bool value if HasFinalQuest and hunt is initiated
     public bool? HunterSuccessful { get; set; } = null;
     // only have a bool value if HasFinalQuest and hunt is not initiated
     public bool? GoodLastChanceSuccessful { get; set; } = null;
     public QuestGameConfig Config { get; set; } = new QuestGameConfig();
+    public GameType Type { get; set; } = GameType.Unspecified;
     public string Notes { get; set; } = "";
 
 
@@ -41,6 +47,13 @@ public class QuestGame
             questLeaders += $"{leader} ";
         }
 
+        string amuletObservations = "";
+
+        foreach ((string,string) observerObserved in AmuletObservations)
+        {
+            questLeaders += $"[{observerObserved.Item1} --> {observerObserved.Item2}] ";
+        }
+
         string notesString = Notes.Replace("\n","\n    ");
 
         return
@@ -48,6 +61,7 @@ public class QuestGame
 Players: {playersString}
 RoundWins: {roundWinString}
 QuestLeaders: {questLeaders}
+AmuletObservations: {amuletObservations}
 HasFinalQuest: {HasFinalQuest}
 HunterSuccessful: {HunterSuccessful}
 GoodLastChanceSuccessful: {GoodLastChanceSuccessful}
@@ -102,6 +116,14 @@ Notes: {notesString}";
         Full,
         Partial,
         None
+    }
+
+    public enum GameType
+    {
+        Default,
+        DirectorsCut,
+        Modified,
+        Unspecified
     }
 
 
