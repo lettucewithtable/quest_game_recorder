@@ -274,6 +274,62 @@
         ]
       },
       "Notes": "\nhello\nhow are you doing today\nquite fine thank you\nthat is fantastic"
+    },
+    {
+      "Time": "2024-01-17T22:25:52.055263-08:00",
+      "Players": [
+        {
+          "PlayerID": "Simon",
+          "Role": null,
+          "Victory": null
+        },
+        {
+          "PlayerID": "Xiameera",
+          "Role": 0,
+          "Victory": null
+        },
+        {
+          "PlayerID": "Seven",
+          "Role": null,
+          "Victory": null
+        },
+        {
+          "PlayerID": "Isaac",
+          "Role": null,
+          "Victory": null
+        },
+        {
+          "PlayerID": "Ali",
+          "Role": null,
+          "Victory": null
+        }
+      ],
+      "RoundWins": [
+        1,
+        0,
+        0,
+        1,
+        1
+      ],
+      "RoundLeaders": [],
+      "HasFinalQuest": true,
+      "HunterSuccessful": false,
+      "GoodLastChanceSuccessful": null,
+      "Config": {
+        "NumberOfPlayers": 9,
+        "Roles": [
+          0,
+          1,
+          2,
+          5,
+          6,
+          8,
+          9,
+          10,
+          7
+        ]
+      },
+      "Notes": ""
     }
   ]
 }
