@@ -20,7 +20,6 @@ public class QuestGame
     // only have a bool value if HasFinalQuest and hunt is not initiated
     public bool? GoodLastChanceSuccessful { get; set; } = null;
     public QuestGameConfig Config { get; set; } = new QuestGameConfig();
-    public GameType Type { get; set; } = GameType.Unspecified;
     public string Notes { get; set; } = "";
 
 
@@ -129,31 +128,35 @@ Notes: {notesString}";
 
     public class QuestGameConfig
     {
+        public string Name { get; set; } = "";
+        public GameType Type { get; set; } = GameType.Unspecified;
         public int NumberOfPlayers { get; set; } = 0;
         public List<QuestRole> Roles { get; set; } = new List<QuestRole>();
 
         public override string ToString()
         {
             var groupBy = this.Roles.GroupBy(role => role).ToDictionary(group => group.Key, group => group.Count());
-
-            string returnVal = $"{this.NumberOfPlayers} |";
+            string returnVal = $"Name:      {Name}\n";
+            returnVal +=        $"GameType:  {PadTruc(Type,10,true)}\n";
+            returnVal +=       $"#ofplayer: {PadTruc(this.NumberOfPlayers,2,true)}\n";
 
             foreach (var group in groupBy)
             {
-                returnVal += $" x{group.Value} {group.Key}";
+                returnVal += $"    x{group.Value} {group.Key}\n";
             }
-
+            returnVal += "\n";
             return returnVal;
         }
     }
 
-    private static string PadTruc(string val, int length, bool alignLeft = false)
-    {
+    private static string PadTruc(object? val, int length, bool alignLeft = false)
+    {   
+        string valStr = val?.ToString() ?? "";
         if (alignLeft)
         {
-            return val.Length > length ? val.Substring(0, length) : val.PadRight(length, ' ');
+            return valStr.Length > length ? valStr.Substring(0, length) : valStr.PadRight(length, ' ');
         }
-        return val.Length > length ? val.Substring(0, length) : val.PadLeft(length, ' ');
+        return valStr.Length > length ? valStr.Substring(0, length) : valStr.PadLeft(length, ' ');
     }
 }
 

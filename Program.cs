@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Net.Quic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static QuestGame;
@@ -108,7 +109,8 @@ static class Program
         Console.WriteLine("Select Config: ");
         for (int i = 0; i < configs.Count; i++)
         {
-            Console.WriteLine($"{i} - {configs[i]}");
+            Console.WriteLine($"{i} {DASH}");
+            Console.WriteLine($"{configs[i]}");
         }
 
         int choice;
@@ -186,7 +188,6 @@ static class Program
     public static void EditGame(int gameIndex)
     {
         List<(string, Action)> editGameValueActions = new List<(string, Action)>{
-            ("Game Type", () => SpecifyGameType(gameIndex)),
             ("Players",() => EditPlayers(gameIndex)),
             ("Leadership",() => InputLeadership(gameIndex)),
             ("AmuletObservations", () => InputAmuletObservations(gameIndex)),
@@ -660,19 +661,47 @@ static class Program
 
     public static void MakeNewGameConfig()
     {
-        QuestGame.QuestGameConfig newConfig = new QuestGame.QuestGameConfig();
+        QuestGameConfig newConfig = new QuestGame.QuestGameConfig();
 
-        Console.Write("# of players: ");
-        int choice;
-        if (int.TryParse(Console.ReadLine(), out choice) && 0 < choice)
+        Console.WriteLine("Input Name of Config");
+        Console.Write(">> ");
+        string? rawInput = Console.ReadLine();
+        while (rawInput == null || rawInput == "")
         {
-            newConfig.NumberOfPlayers = choice;
+            Console.WriteLine("Invalid Input. (cannot be empty)");
+            Console.Write(">> ");
+            rawInput = Console.ReadLine();
         }
-        else
+        newConfig.Name = rawInput;
+
+        Console.WriteLine("Input Game Type --> (D)efault, Directors(C)ut, (M)odified, (U)nspecified");
+        char inputChar = InputChar(new char[]{'d','c','m','u'});
+
+        switch (inputChar)
         {
-            Console.WriteLine("Invalid Number");
-            MakeNewGameConfig();
-            return;
+            case 'd':
+                newConfig.Type = GameType.Default;
+                break;
+            case 'c':
+                newConfig.Type = GameType.DirectorsCut;
+                break;
+            case 'm':
+                newConfig.Type = GameType.Modified;
+                break;
+            case 'u':
+            default:
+                newConfig.Type = GameType.Unspecified;
+                break;
+        }
+
+
+        Console.WriteLine("Input # of players");
+        Console.Write(">> ");
+        int choice;
+        while (!int.TryParse(Console.ReadLine(), out choice) || choice <= 0)
+        {
+            Console.WriteLine("Invalid Input");
+            Console.Write(">> ");
         }
 
         string[] roleNames = Enum.GetNames(typeof(QuestGame.QuestRole));
@@ -681,7 +710,7 @@ static class Program
             Console.WriteLine($"{i} - {roleNames[i]}");
         }
         Console.Write(">> ");
-        string? rawInput = Console.ReadLine();
+        rawInput = Console.ReadLine();
         List<string> tokens = TokenizeRawInput(rawInput, "[^0-9]");
 
         foreach (string token in tokens)
@@ -690,6 +719,7 @@ static class Program
         }
 
         configs.Add(newConfig);
+        UpdateJsonFiles();
     }
 
     public static List<string> TokenizeRawInput(string? rawInput, string regexReplace)
