@@ -1019,6 +1019,8 @@ static class Program
         string notesString = questGame.Notes.Replace("\n","\n" + PadTruc("",20));
         Console.Write(notesString);
         Console.WriteLine();
+        Console.WriteLine(KeyValuePadTruc64("Config Name",questGame.Config.Name));
+        Console.WriteLine(KeyValuePadTruc64("GameType",questGame.Config.Type));
     }
 
     public static string KeyValuePadTruc64(object key, object value)
