@@ -1,27 +1,48 @@
 {
   "configs": [
     {
-      "NumberOfPlayers": 9,
+      "Name": "Regular 7 Player Game w/ Hunter",
+      "Type": 0,
+      "NumberOfPlayers": 0,
       "Roles": [
-        0,
-        1,
-        2,
-        5,
-        6,
-        8,
         9,
+        1,
+        5,
+        2,
+        7,
         10,
-        7
+        8
       ]
     },
     {
-      "NumberOfPlayers": 5,
+      "Name": "Director's Cut Duke/Youth/Troublemaker Pool",
+      "Type": 1,
+      "NumberOfPlayers": 0,
+      "Roles": [
+        1,
+        2,
+        7,
+        8,
+        5,
+        10,
+        9
+      ]
+    },
+    {
+      "Name": "9 Player Director's Cut 3 Pool",
+      "Type": 1,
+      "NumberOfPlayers": 0,
       "Roles": [
         0,
         1,
+        1,
+        1,
         2,
+        6,
+        7,
         8,
-        14
+        9,
+        10
       ]
     }
   ]
