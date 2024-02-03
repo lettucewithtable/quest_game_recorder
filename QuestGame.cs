@@ -14,8 +14,8 @@ public class QuestGame
     public List<string> RoundLeaders { get; set; } = new List<string>();
     //item 1 observer, item 2 observed
     public List<(string,string)> AmuletObservations { get; set; } = new List<(string, string)>();
-    public bool HasFinalQuest { get; set; } = false;
-    // only have a bool value if HasFinalQuest and hunt is initiated
+    public bool HasFinalQuestOrHunt { get; set; } = false;
+    // only have a bool value if HasFinalQuestOrHunt and hunt is initiated
     public bool? HunterSuccessful { get; set; } = null;
     // only have a bool value if HasFinalQuest and hunt is not initiated
     public bool? GoodLastChanceSuccessful { get; set; } = null;
@@ -61,7 +61,7 @@ Players: {playersString}
 RoundWins: {roundWinString}
 QuestLeaders: {questLeaders}
 AmuletObservations: {amuletObservations}
-HasFinalQuest: {HasFinalQuest}
+HasFinalQuestOrHunt: {HasFinalQuestOrHunt}
 HunterSuccessful: {HunterSuccessful}
 GoodLastChanceSuccessful: {GoodLastChanceSuccessful}
 Notes: {notesString}";
