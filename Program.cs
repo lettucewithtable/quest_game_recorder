@@ -52,6 +52,48 @@ static class Program
         configs = QuestConfigsToCSharpObjects();
 
         MainMenu();
+                // Dictionary<string,int[]> tallyArray = new Dictionary<string, int[]>();
+        // tallyArray.Add("Orion",new int[4]);
+        // tallyArray.Add("Jacob",new int[4]);
+        // tallyArray.Add("Ali",new int[4]);
+        // tallyArray.Add("Simon",new int[4]);
+        // tallyArray.Add("Xiameera",new int[4]);
+        // tallyArray.Add("Seven",new int[4]);
+
+        // for (int i = 0; i < games.Count; i++)
+        // {
+        //     foreach (QuestPlayer q in games[i].Players)
+        //     {
+        //         int[] tallies = tallyArray[q.PlayerID];
+        //         if (q.Role.IsGood())
+        //         {
+        //             tallies[1] += 1;
+        //             if (q.Victory == Victory.Full)
+        //             {
+        //                 tallies[0] += 1;
+        //             }
+        //         }
+                
+        //         if (q.Role.IsEvil())
+        //         {
+        //             tallies[3] += 1;
+        //             if (q.Victory == Victory.Full)
+        //             {
+        //                 tallies[2] += 1;
+        //             }
+        //         }
+        //     }
+
+            
+        // }
+
+        // foreach (string player in tallyArray.Keys)
+        // {
+        //     Console.WriteLine($"{player}: ");
+        //     Console.WriteLine($"    GoodWinRate: {(double) tallyArray[player][0]/tallyArray[player][1]}");
+        //     Console.WriteLine($"    EvilWinRate: {(double) tallyArray[player][2]/tallyArray[player][3]}");
+        //     Console.WriteLine($"   TotalWinRate: {(double) (tallyArray[player][0]+tallyArray[player][2])/(tallyArray[player][3]+tallyArray[player][1])}");
+        // }
     }
 
 
@@ -192,7 +234,7 @@ static class Program
             ("Leadership",() => InputLeadership(gameIndex)),
             ("AmuletObservations", () => InputAmuletObservations(gameIndex)),
             ("Round Wins",() => InputRounds(gameIndex)),
-            ("Final Quest",() => InputFinalQuest(gameIndex)),
+            ("Final Quest or Hunt",() => InputFinalQuest(gameIndex)),
             ("Assign Players to Roles",() => AssignPlayersToRoles(gameIndex)),
             ("Victory",() => EditVictory(gameIndex)),
             ("Notes",() => EditNotes(gameIndex)),
@@ -436,17 +478,17 @@ static class Program
 
     public static void InputFinalQuest(int gameIndex)
     {
-        Console.WriteLine("Did the Final Quest Begin (5 mins of talking)? (y/n)");
+        Console.WriteLine("Is the hunter in the game or did the Final Quest Begin (5 mins of talking)? (y/n)");
         games[gameIndex].HunterSuccessful = null;
         games[gameIndex].GoodLastChanceSuccessful = null;
-        games[gameIndex].HasFinalQuest = InputYesNo();
+        games[gameIndex].HasFinalQuestOrHunt = InputYesNo();
 
-        if (!games[gameIndex].HasFinalQuest)
+        if (!games[gameIndex].HasFinalQuestOrHunt)
         {
             return;
         }
 
-        Console.WriteLine("Did the Hunter choose to hunt? (y/n)");
+        Console.WriteLine("Did the Hunter hunt? (y/n)");
         if (InputYesNo())
         {
             Console.WriteLine("Did the Hunter Succeed? (y/n)");
@@ -527,7 +569,7 @@ static class Program
     {
         bool GoodWins = true;
         QuestGame currentGame = games[gameIndex];
-        if (currentGame.HasFinalQuest)
+        if (currentGame.HasFinalQuestOrHunt)
         {
             if (currentGame.HunterSuccessful ?? false)
             {
@@ -885,7 +927,7 @@ static class Program
         Console.WriteLine(KeyValuePadTruc64("Roles",""));
         foreach (QuestPlayer player in questGame.Players)
         {
-            Console.Write(PadTruc("",20));
+            Console.Write(PadTruc("",15));
             if (player.Role.IsGood())
             {
                 Console.ForegroundColor = ConsoleColor.Blue;
@@ -901,14 +943,19 @@ static class Program
                 Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.Write($" ({PadTruc(questGame.AmuletObservations.Select(p => p.Item1).ToList().IndexOf(player.PlayerID),1)})");
             }
-            else if (questGame.AmuletObservations.Select(p => p.Item2).Contains(player.PlayerID))
-            {
-                Console.ForegroundColor = ConsoleColor.DarkMagenta;
-                Console.Write($" ({PadTruc(questGame.AmuletObservations.Select(p => p.Item2).ToList().IndexOf(player.PlayerID),1)})");
-            }
             else
             {
                 Console.Write(PadTruc("",4));
+            }
+
+            if (questGame.AmuletObservations.Select(p => p.Item2).Contains(player.PlayerID))
+            {
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Console.Write($"({PadTruc(questGame.AmuletObservations.Select(p => p.Item2).ToList().IndexOf(player.PlayerID),1)})");
+            }
+            else
+            {
+                Console.Write(PadTruc("",3));
             }
 
             Console.ResetColor();
@@ -942,7 +989,7 @@ static class Program
             }
             Console.ResetColor();
         }
-        Console.Write(PadTruc("Quests: [ ", 22));
+        Console.Write(PadTruc("Quests: [ ", 22-5));
         foreach (int r in questGame.RoundWins)
         {
             if (r == 1)
@@ -963,7 +1010,7 @@ static class Program
         }
         Console.ResetColor();
         Console.Write("]");
-        if (questGame.HasFinalQuest)
+        if (questGame.HasFinalQuestOrHunt)
         {
             Console.Write(" ---> ");
             if (questGame.HunterSuccessful != null)
@@ -1007,24 +1054,22 @@ static class Program
         Console.ResetColor();
         Console.WriteLine();
         Console.WriteLine();
-        Console.WriteLine(KeyValuePadTruc64("Unassigned Roles","["));
+        Console.WriteLine(KeyValuePadTruc64("Unassigned","["));
         List<QuestPlayer> nonNullRoles = questGame.Players.Where(p => p.Role != null).ToList();
         List<QuestRole> unassignedRoles = questGame.Config.Roles.Except(nonNullRoles.Select(p => p.Role ?? (QuestRole)(-1))).ToList();
         foreach (QuestRole role in unassignedRoles)
         {
-            Console.WriteLine(PadTruc("",20) + PadTruc(role,44,true));
+            Console.WriteLine(PadTruc("",15) + PadTruc(role,44,true));
         }
-        Console.WriteLine(PadTruc("",20) + "]");
+        Console.WriteLine(PadTruc("",15) + "]");
         Console.Write(KeyValuePadTruc64("Notes",""));
-        string notesString = questGame.Notes.Replace("\n","\n" + PadTruc("",20));
+        string notesString = questGame.Notes.Replace("\n","\n" + PadTruc("",15));
         Console.Write(notesString);
         Console.WriteLine();
-        Console.WriteLine(KeyValuePadTruc64("Config Name",questGame.Config.Name));
-        Console.WriteLine(KeyValuePadTruc64("GameType",questGame.Config.Type));
     }
 
     public static string KeyValuePadTruc64(object key, object value)
     {
-        return PadTruc($"{key}: ", 20) + PadTruc(value,44,true);
+        return PadTruc($"{key}: ", 15) + PadTruc(value,49,true);
     }
 }
