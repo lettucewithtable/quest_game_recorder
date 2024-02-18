@@ -409,6 +409,10 @@ static class Program
         Console.Write(">> ");
         string? rawInput = Console.ReadLine();
         List<string> playerNames = AliasesToNames(TokenizeRawInput(rawInput, "[^a-zA-Z]"));
+        if (games[gameIndex].AmuletObservations.Count > playerNames.Count)
+        {
+            games[gameIndex].AmuletObservations = games[gameIndex].AmuletObservations.GetRange(0, playerNames.Count);
+        }
         while (playerNames.Count > games[gameIndex].AmuletObservations.Count)
         {
             games[gameIndex].AmuletObservations.Add(("",""));
@@ -431,6 +435,10 @@ static class Program
         Console.Write(">> ");
         string? rawInput = Console.ReadLine();
         List<string> playerNames = AliasesToNames(TokenizeRawInput(rawInput, "[^a-zA-Z]"));
+        if (games[gameIndex].AmuletObservations.Count > playerNames.Count)
+        {
+            games[gameIndex].AmuletObservations = games[gameIndex].AmuletObservations.GetRange(0, playerNames.Count);
+        }
         while (playerNames.Count > games[gameIndex].AmuletObservations.Count)
         {
             games[gameIndex].AmuletObservations.Add(("",""));
@@ -879,41 +887,238 @@ static class Program
     }
 
     public static void CheckForGameInconsistencies(int gameIndex)
-    {
+    {   
+        bool likelyValidGame = true;
+        QuestGame g = games[gameIndex];
         //check for if leader and amulet observers overlap
-        WriteWarning("WARNING: TEST WARNING");
-        //ensure that everyone has proper victory value 
+        foreach (string amuletObserver in g.AmuletObservations.Select(p => p.Item1))
+        {  
+            if (g.RoundLeaders.Contains(amuletObserver))
+            {
+                WriteWarning($"{amuletObserver} was both leader and amulet observer");
+                likelyValidGame = false;
+            }
+        }
 
-        //ensure that final quest does not occur if good wins with 3 wins
+        //check for if amulet observer and observed overlap incorrectly
+        for (int i = 0; i < g.AmuletObservations.Count; i++)
+        {
+            for (int j = 0; j <= i; j++)
+            {
+                // If a person is an observer and observed, they can only observe AFTER being observed
+                if (g.AmuletObservations[i].Item2 == g.AmuletObservations[j].Item1)
+                {
+                    if (i == j)
+                    {
+                        WriteWarning($"{g.AmuletObservations[j].Item1} Cannot Observe Themselves");
+                        likelyValidGame = false;
+                    }
+                    else
+                    {
+                        WriteWarning($"{g.AmuletObservations[j].Item1} Cannot Be Observed After Observing");
+                        likelyValidGame = false;
+                    }
+                }
+            }
+        }
+
+        //ensure that everyone has proper victory value
+        bool GoodWins = true;
+        QuestGame currentGame = games[gameIndex];
+        if (currentGame.HasFinalQuestOrHunt)
+        {
+            if (currentGame.HunterSuccessful ?? false)
+            {
+                GoodWins = false;
+            }
+            else if (!currentGame.GoodLastChanceSuccessful ?? false)
+            {
+                GoodWins = false;
+                // This line looks complicated, its just asking, for all the roundleaders, how many were evil? if all of them, then good wins IF good's last chance happens (even if unsuccessful)
+                if (games[gameIndex].Players.Where(p => p.Role.IsEvil()).Select(p => p.PlayerID).Intersect(games[gameIndex].RoundLeaders).Count() == games[gameIndex].RoundLeaders.Count)
+                {
+                    GoodWins = true;
+                }
+            }
+        }
+
+        foreach (QuestPlayer player in g.Players)
+        {
+            if (player.Role.IsGood() && GoodWins && player.Victory != Victory.Full)
+            {
+                WriteWarning($"{player.PlayerID} is Good, Good should have won, and yet they do not have full victory.");
+                likelyValidGame = false;
+            }
+
+            if (player.Role.IsGood() && !GoodWins && player.Victory != Victory.None)
+            {
+                WriteWarning($"{player.PlayerID} is Good, Evil should have won, and yet they do not have none victory.");
+                likelyValidGame = false;
+            }
+
+            if (player.Role.IsEvil() && !GoodWins && player.Victory != Victory.Full)
+            {
+                WriteWarning($"{player.PlayerID} is Evil, Evil should have won, and yet they do not have full victory.");
+                likelyValidGame = false;
+            }
+
+            if (player.Role.IsEvil() && GoodWins && player.Victory != Victory.None)
+            {
+                WriteWarning($"{player.PlayerID} is Evil, Good should have won, and yet they do not have none victory.");
+                likelyValidGame = false;
+            }           
+        }
+
+        //ensure that final quest does not occur if good wins is greater than evil wins
+        if (g.GoodLastChanceSuccessful != null &&  g.RoundWins.Count(p => p == RoundWin.Good) > g.RoundWins.Count(p => p == RoundWin.Evil))
+        {
+            WriteWarning($"Goods Last Chance should be null as Good had more Round Wins than Evil");
+            likelyValidGame = false;
+        }
 
         //ensure that if final quest happens that either hunterSuccessful or goodsLastChance (but not both) are not null
+        if (g.HasFinalQuestOrHunt)
+        {
+            if (g.HunterSuccessful == null && g.GoodLastChanceSuccessful == null)
+            {
+                WriteWarning("Game Claims to have Final Quest or Hunt, yet NEITHER has a true value");
+                likelyValidGame = false;
+            }
+
+            if (g.HunterSuccessful != null && g.GoodLastChanceSuccessful != null)
+            {
+                WriteWarning("Game Claims to have Final Quest or Hunt, yet BOTH of them have a true value.");
+                likelyValidGame = false;
+            }
+        }
+
+        if (!g.HasFinalQuestOrHunt)
+        {
+            if (g.HunterSuccessful != null || g.GoodLastChanceSuccessful != null)
+            {
+                WriteWarning("Game Claim to have not have final quest or hunt, yet hunt/good last chance has truth value");
+                likelyValidGame = false;
+            }
+        }
 
         //someone does not have a role
+        if (g.Players.Any(player => player.Role == null))
+        {
+            WriteWarning("At least one person does not have a role.");
+            likelyValidGame = false;
+        }
 
-        //game is incomplete
+        //someone does not have victory value
+        if (g.Players.Any(player => player.Victory == null))
+        {
+            WriteWarning("At least one person does not have victory.");
+            likelyValidGame = false;
+        }
 
         //duplicate leadership or amulet-ship
+        if (g.Players.Select(p => p.PlayerID).Distinct().Count() != g.Players.Select(p => p.PlayerID).Count())
+        {
+            WriteWarning("Duplicate Player in Leaders");
+            likelyValidGame = false;
+        }
+
+        if (g.AmuletObservations.Select(p => p.Item1).Distinct().Count() != g.AmuletObservations.Select(p => p.Item1).Count())
+        {
+            WriteWarning("Duplicate Player in Amulet Observers");
+            likelyValidGame = false;
+        }
+
+        if (g.AmuletObservations.Select(p => p.Item2).Distinct().Count() != g.AmuletObservations.Select(p => p.Item2).Count())
+        {
+            WriteWarning("Duplicate Player in Amulet Observed");
+            likelyValidGame = false;
+        }
 
         //leadership or amulet-ship person does not appear in the game
+        foreach (string leader in g.RoundLeaders)
+        {
+            if (!g.Players.Select(p => p.PlayerID).Contains(leader))
+            {
+                WriteWarning($"Leader {leader} is not in game.");
+                likelyValidGame = false;
+            }
+        }
+
+        foreach (string observers in g.AmuletObservations.Select(p => p.Item1))
+        {
+            if (observers == "") { continue; }
+            if (!g.Players.Select(p => p.PlayerID).Contains(observers))
+            {
+                WriteWarning($"Amulet Observer {observers} is not in game.");
+                likelyValidGame = false;
+            }
+        }
+
+        foreach (string observed in g.AmuletObservations.Select(p => p.Item2))
+        {
+            if (observed == "") { continue; }
+            if (!g.Players.Select(p => p.PlayerID).Contains(observed))
+            {
+                WriteWarning($"Amulet Observed {observed} is not in game.");
+                likelyValidGame = false;
+            }
+        }
 
         //someone has a role not in the config
+        List<QuestRole> questRoles = new List<QuestRole>(g.Config.Roles);
+        foreach (var player in g.Players)
+        {   
+            if (player.Role != null && questRoles.Contains(player.Role.Value))
+            {
+                questRoles.Remove(player.Role.Value);
+            }
+            else
+            {
+                if (player.Role != null)
+                {
+                    WriteWarning($"{player.PlayerID} has role ${player.Role} not in Config");
+                    likelyValidGame = false;
+                }
+            }
+        }
+
 
         //more leaders than their are rounds
+        if (g.RoundLeaders.Count != g.RoundWins.Count)
+        {
+            WriteWarning("# of Leaders and # of Rounds Mismatch");
+            likelyValidGame = false;
+        }
 
         //more or less amulet's then their should be (need knowledge about boards)
         //notes should highlight why a warning is acceptable (say extra amulet or amulet in different location/quest) otherwise assume basic set up
         //if game type is directors cut or default, this check should check, otherwise, don't
+        //I've decided this check is too hard for me rn
 
         //amulet observer/observed count mismatch
+        if (g.AmuletObservations.Select(p => p.Item1).Contains("") || g.AmuletObservations.Select(p => p.Item2).Contains(""))
+        {
+            WriteWarning("Missing Amulet Observer or Observed");
+            likelyValidGame = false;
+        }
 
         //no hunter to hunt (yet the hunterSuccessful is still not null)
-
-        //invalid quest/finalquest games state (if 3 good quests but still final quest, or finalquest but not 3 bad wins, or no final quest with 3 bad wins)
+        if (g.HunterSuccessful != null && !g.Players.Select(p => p.Role).Contains(QuestRole.BlindHunter))
+        {
+            WriteWarning("Hunter is not in game and yet hunter success has truth value.");
+            likelyValidGame = false;
+        }
 
         //if game looks correct, green "valid game" should appear
         //notes should specify something special if modified game is selected
+        if (likelyValidGame)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Valid Game (probably)");
+            Console.ResetColor();
+        }
     }
-    
+
     public static void WriteWarning(string message)
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
